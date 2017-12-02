@@ -5,7 +5,7 @@ open System
 let charToInt = Char.GetNumericValue >> int
 
 let getDigits (input: string) =
-  input.ToCharArray()
+  input.Trim().ToCharArray()
   |> Array.map charToInt
   |> List.ofArray
 
