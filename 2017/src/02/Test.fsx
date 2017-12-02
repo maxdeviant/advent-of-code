@@ -10,4 +10,6 @@ let partOne = computeChecksum partOneChecksum
 
 partOne puzzleInput
 
-checksumTwo puzzleInput
+let partTwo = computeChecksum partTwoChecksum
+
+partTwo puzzleInput

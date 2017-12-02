@@ -19,17 +19,20 @@ let partOneChecksum (rows: string list list) =
 
   rows |> List.sumBy checksum
 
-let checksumTwo (input: string) =
-  let checksum' (columns: string list) =
-    columns
-    |> List.map float
-    |> List.collect (fun x -> columns |> List.map float |> List.map (fun y -> (x, y)))
+let partTwoChecksum (rows: string list list) =
+  let parseColumns = List.map float
+
+  let isWholeNumber n = (n % 1.0) = 0.0
+
+  let checksum columns =
+    let columns' = columns |> List.map float
+    columns'
+    |> List.collect (fun x -> columns' |> List.map (fun y -> (x, y)))
     |> List.map (fun (x, y) -> x / y)
-    |> List.filter (fun x -> (x % 1.0) = 0.0)
+    |> List.filter isWholeNumber
     |> List.sortDescending
     |> List.head
 
-  input
-  |> parseInput
-  |> List.map checksum'
-  |> List.sum
+  rows
+  |> List.sumBy checksum
+  |> int
