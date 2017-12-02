@@ -7,3 +7,5 @@ open System.IO
 let puzzleInput = File.ReadAllText("2017/src/02/input.txt")
 
 checksum puzzleInput
+
+checksumTwo puzzleInput
