@@ -34,10 +34,8 @@ let partTwoSolver (digits: int list) =
   let rec halfway position ahead =
     match ahead with
     | [] -> halfway position digits
-    | x :: xs ->
-      if position = 1
-      then x
-      else halfway (position - 1) xs
+    | x :: _ when position = 1 -> x
+    | _ :: xs -> halfway (position - 1) xs
 
   digits
   |> List.indexed
