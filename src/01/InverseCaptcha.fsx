@@ -14,12 +14,14 @@ let solveCaptcha solver (input: string) =
   |> solver
 
 let partOneSolver digits =
+  let firstDigit = List.head digits
+
   let sumIf acc x y =
     if x = y then x + acc else acc
 
-  let rec solve firstDigit acc = function
+  let rec solve acc = function
   | [] -> acc
   | [x] -> sumIf acc x firstDigit
-  | x :: y :: ys -> solve firstDigit (sumIf acc x y) (y :: ys)
+  | x :: y :: ys -> solve (sumIf acc x y) (y :: ys)
 
-  solve (List.head digits) 0 digits
+  solve 0 digits
