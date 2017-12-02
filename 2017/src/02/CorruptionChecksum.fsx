@@ -11,11 +11,11 @@ let checksum (input: string) =
   let checksum' (columns: string list) =
     columns
     |> List.map int
-    |> List.sort
+    |> List.sortDescending
     |> (fun x ->
-      let head = List.head x
-      let tail = List.head (List.rev x)
-      tail - head)
+      let max = List.head x
+      let min = List.head (List.rev x)
+      max - min)
 
   input
   |> parseInput
