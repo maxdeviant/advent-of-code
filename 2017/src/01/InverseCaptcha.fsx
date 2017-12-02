@@ -20,9 +20,9 @@ let partOneSolver digits =
     if x = y then x + acc else acc
 
   let rec solve acc = function
-  | [] -> acc
-  | [x] -> sumIf acc x firstDigit
-  | x :: y :: ys -> solve (sumIf acc x y) (y :: ys)
+    | [] -> acc
+    | [x] -> sumIf acc x firstDigit
+    | x :: y :: ys -> solve (sumIf acc x y) (y :: ys)
 
   solve 0 digits
 
