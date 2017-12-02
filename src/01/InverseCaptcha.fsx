@@ -25,3 +25,23 @@ let partOneSolver digits =
   | x :: y :: ys -> solve (sumIf acc x y) (y :: ys)
 
   solve 0 digits
+
+let partTwoSolver (digits: int list) =
+  assert ((List.length digits) % 2 = 0)
+
+  let halfwayDistance = (List.length digits) / 2
+
+  let rec halfway position ahead =
+    match ahead with
+    | [] -> halfway position digits
+    | x :: xs ->
+      if position = 1
+      then x
+      else halfway (position - 1) xs
+
+  digits
+  |> List.indexed
+  |> List.map (fun (i, d) -> (d, halfway halfwayDistance (digits |> Seq.skip (i + 1) |> Seq.toList)))
+  |> List.filter (fun (i, d) -> i = d)
+  |> List.map (fun (i, d) -> i)
+  |> List.sum
