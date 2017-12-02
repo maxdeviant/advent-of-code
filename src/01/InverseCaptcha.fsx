@@ -9,7 +9,7 @@ let getDigits (input: string) =
   |> Array.map charToInt
   |> List.ofArray
 
-let solveCaptcha solver (input: string) =
+let solveCaptcha solver input =
   getDigits input
   |> solver
 
