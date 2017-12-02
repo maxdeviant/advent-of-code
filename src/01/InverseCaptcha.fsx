@@ -41,7 +41,7 @@ let partTwoSolver (digits: int list) =
 
   digits
   |> List.indexed
-  |> List.map (fun (i, d) -> (d, halfway halfwayDistance (digits |> Seq.skip (i + 1) |> Seq.toList)))
-  |> List.filter (fun (i, d) -> i = d)
-  |> List.map (fun (i, d) -> i)
-  |> List.sum
+  |> List.map (fun (i, x) ->
+    (x, halfway halfwayDistance (digits |> Seq.skip (i + 1) |> Seq.toList)))
+  |> List.filter (fun (x, y) -> x = y)
+  |> List.sumBy (fun (x, _) -> x)
