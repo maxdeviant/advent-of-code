@@ -9,15 +9,17 @@ let getDigits (input: string) =
   |> Array.map charToInt
   |> List.ofArray
 
-let sumIfMatch digits =
-  let rec sum acc = function
-  | [_] | [] -> acc
-  | x :: y :: ys ->
-    sum (acc + (if x = y then x else 0)) (y :: ys)
+let solveCaptcha solver (input: string) =
+  getDigits input
+  |> solver
 
-  sum 0 digits
+let partOneSolver digits =
+  let sumIf acc x y =
+    if x = y then x + acc else acc
 
-let solveCaptcha (input: string) =
-  let firstDigit = string(input.Chars 0)
-  getDigits (input + firstDigit)
-  |> sumIfMatch
+  let rec solve firstDigit acc = function
+  | [] -> acc
+  | [x] -> sumIf acc x firstDigit
+  | x :: y :: ys -> solve firstDigit (sumIf acc x y) (y :: ys)
+
+  solve (List.head digits) 0 digits
