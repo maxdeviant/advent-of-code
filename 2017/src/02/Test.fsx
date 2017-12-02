@@ -4,7 +4,7 @@ open Maxdeviant.AdventOfCode2017.Day2
 
 open System.IO
 
-let puzzleInput = File.ReadAllText("2017/src/02/input.txt")
+let puzzleInput = (Path.Combine (__SOURCE_DIRECTORY__, "input.txt")) |> File.ReadAllText
 
 let partOne = computeChecksum partOneChecksum
 
