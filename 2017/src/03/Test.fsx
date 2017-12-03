@@ -1,4 +1,4 @@
-#load "Puzzle.fsx"
+#load "SpiralMemory.fsx"
 
 open Maxdeviant.AdventOfCode2017.Day3
 open System.IO
