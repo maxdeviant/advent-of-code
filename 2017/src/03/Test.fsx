@@ -7,14 +7,13 @@ let puzzleInput = (Path.Combine (__SOURCE_DIRECTORY__, "input.txt")) |> File.Rea
 
 let partOne (input: string) =
   let n = int input
-  let spiral = makeSpiral n
-  printfn "%A" spiral
-  countRequiredSteps spiral n
+  let spiral, start, goal = makeSpiral n
+  countRequiredSteps spiral start goal
 
 partOne "1"
-partOne "12"
+partOne "9"
+partOne "23"
 partOne "25"
 partOne "1024"
 
 partOne puzzleInput
-
