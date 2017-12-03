@@ -17,3 +17,12 @@ partOne "25"
 partOne "1024"
 
 partOne puzzleInput
+
+let partTwo (input: string) =
+  let n = int input
+  findLargerSum n
+
+partTwo "1"
+partTwo "9"
+
+partTwo puzzleInput
