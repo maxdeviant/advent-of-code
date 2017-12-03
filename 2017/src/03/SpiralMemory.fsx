@@ -9,10 +9,39 @@ type Move =
   | Left
   | Right
 
-// R U L L D D R R R U U U
-
 let makeSpiral maxValue =
   let size = (float maxValue) |> Math.Sqrt |> Math.Ceiling |> int
+  let center = (size / 2, size / 2)
+
+  let getDistance ((x1, y1): int * int) ((x2, y2): int * int) =
+    (float (x2 - x1) ** 2.0 + float (y2 - y1) ** 2.0)
+    |> Math.Sqrt
+
+  let isPositionInBounds (spiral: int[,]) (x, y) =
+    x >= 0 && x < (Array2D.length2 spiral) && y >= 0 && y < (Array2D.length1 spiral)
+
+  let isPositionEmpty (spiral: int[,]) (x, y) =
+    spiral.[y, x] = 0
+
+  let isValidPosition (spiral: int[,]) position =
+    isPositionInBounds spiral position && isPositionEmpty spiral position
+
+  let getPotentialMoves (spiral: int[,]) (x, y) =
+    [(Left, (x + 1, y))
+     (Up, (x, y - 1))
+     (Down, (x - 1, y))
+     (Right, (x, y + 1))]
+     |> List.filter (fun (_, position) -> isValidPosition spiral position)
+
+  let getBestMove (spiral: int[,]) (x, y) =
+    getPotentialMoves spiral (x, y)
+    |> List.sortBy (fun (_, position) -> getDistance center position)
+    |> List.tryHead
+
+  let getNextPosition (spiral: int[,]) position =
+    match getBestMove spiral position with
+    | Some (_, position) -> position
+    | Option.None -> raise (Exception (sprintf "No valid moves from %A" position))
 
   let getNextMove = function
     | None -> Right
@@ -21,28 +50,10 @@ let makeSpiral maxValue =
     | Left -> Down
     | Right -> Up
 
-  let isSquareEmpty (spiral: int[,]) (x, y) =
-    spiral.[y, x] = 0
-
-  let rec move (spiral: int[,]) currentMove (x, y) =
-    let nextPosition =
-      match currentMove with
-      | None -> (x, y)
-      | Up -> (x, y - 1)
-      | Down -> (x, y + 1)
-      | Left -> (x - 1, y)
-      | Right -> (x + 1, y)
-    if isSquareEmpty spiral nextPosition
-      then nextPosition
-      else move spiral (getNextMove currentMove) nextPosition
-
   let rec fillSpiral target (spiral: int[,]) n (x, y) currentMove =
     spiral.[y, x] <- n
-    printfn "%A %A %A %A" (x, y) currentMove (getNextMove currentMove) spiral
     match n with
     | n when n = target -> spiral
-    | n -> fillSpiral target spiral (n + 1) (move spiral currentMove (x, y)) (getNextMove currentMove)
+    | n -> fillSpiral target spiral (n + 1) (getNextPosition spiral (x, y)) (getNextMove currentMove)
 
-  let start = (size / 2, size / 2)
-
-  fillSpiral maxValue (Array2D.init size size (fun _ _ -> 0)) 1 start None
+  fillSpiral maxValue (Array2D.init size size (fun _ _ -> 0)) 1 center None
