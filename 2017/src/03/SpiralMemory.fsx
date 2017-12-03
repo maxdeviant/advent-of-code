@@ -2,13 +2,6 @@ module Maxdeviant.AdventOfCode2017.Day3
 
 open System
 
-type Move =
-  | None
-  | Up
-  | Down
-  | Left
-  | Right
-
 let makeSpiral maxValue =
   let size = (float maxValue) |> Math.Sqrt |> Math.Ceiling |> int
   let center = (size / 2, size / 2)
@@ -27,33 +20,26 @@ let makeSpiral maxValue =
     isPositionInBounds spiral position && isPositionEmpty spiral position
 
   let getPotentialMoves (spiral: int[,]) (x, y) =
-    [(Left, (x + 1, y))
-     (Up, (x, y - 1))
-     (Down, (x - 1, y))
-     (Right, (x, y + 1))]
-     |> List.filter (fun (_, position) -> isValidPosition spiral position)
+    [(x + 1, y)
+     (x, y - 1)
+     (x - 1, y)
+     (x, y + 1)]
+     |> List.filter (isValidPosition spiral)
 
   let getBestMove (spiral: int[,]) (x, y) =
     getPotentialMoves spiral (x, y)
-    |> List.sortBy (fun (_, position) -> getDistance center position)
+    |> List.sortBy (getDistance center)
     |> List.tryHead
 
   let getNextPosition (spiral: int[,]) position =
     match getBestMove spiral position with
-    | Some (_, position) -> position
-    | Option.None -> raise (Exception (sprintf "No valid moves from %A" position))
+    | Some position -> position
+    | None -> raise (Exception (sprintf "No valid moves from %A" position))
 
-  let getNextMove = function
-    | None -> Right
-    | Up -> Left
-    | Down -> Right
-    | Left -> Down
-    | Right -> Up
-
-  let rec fillSpiral target (spiral: int[,]) n (x, y) currentMove =
+  let rec fillSpiral target (spiral: int[,]) n (x, y) =
     spiral.[y, x] <- n
     match n with
     | n when n = target -> spiral
-    | n -> fillSpiral target spiral (n + 1) (getNextPosition spiral (x, y)) (getNextMove currentMove)
+    | n -> fillSpiral target spiral (n + 1) (getNextPosition spiral (x, y))
 
-  fillSpiral maxValue (Array2D.init size size (fun _ _ -> 0)) 1 center None
+  fillSpiral maxValue (Array2D.init size size (fun _ _ -> 0)) 1 center
