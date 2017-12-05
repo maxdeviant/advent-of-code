@@ -8,7 +8,7 @@ let puzzleInput = (Path.Combine (__SOURCE_DIRECTORY__, "input.txt")) |> File.Rea
 let partOne (input: string) =
   input.Trim().Split('\n')
   |> List.ofArray
-  |> countValidPassphrases
+  |> countValidPassphrases (isValidPassphrase isUnique)
 
 partOne "aa bb cc dd ee"
 partOne "aa bb cc dd aa"
