@@ -28,7 +28,7 @@ impl FrequencyChange {
     }
 }
 
-fn read_frequency_changes_from_input(input: &String) -> Vec<FrequencyChange> {
+fn read_frequency_changes_from_input(input: &str) -> Vec<FrequencyChange> {
     input.lines().map(FrequencyChange::from_str).collect()
 }
 
@@ -59,11 +59,11 @@ fn find_first_repeated_frequency(changes: Vec<FrequencyChange>) -> i32 {
     }
 }
 
-fn part_one(input: &String) -> i32 {
+fn part_one(input: &str) -> i32 {
     calculate_frequency(read_frequency_changes_from_input(input))
 }
 
-fn part_two(input: &String) -> i32 {
+fn part_two(input: &str) -> i32 {
     find_first_repeated_frequency(read_frequency_changes_from_input(input))
 }
 
