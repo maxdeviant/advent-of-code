@@ -9,6 +9,17 @@ enum FrequencyChange {
 }
 
 impl FrequencyChange {
+    pub fn new(input: &str) -> Self {
+        let mut characters = input.chars();
+        let sign = characters.next().unwrap();
+        let number = characters.collect::<String>().parse::<i32>().unwrap();
+        match sign {
+            '+' => FrequencyChange::Increase(number),
+            '-' => FrequencyChange::Decrease(number),
+            c => panic!("Unexpected character '{}'", c),
+        }
+    }
+
     pub fn apply(&self, value: i32) -> i32 {
         match self {
             FrequencyChange::Increase(n) => value + n,
@@ -18,19 +29,7 @@ impl FrequencyChange {
 }
 
 fn read_frequency_changes_from_input(input: &String) -> Vec<FrequencyChange> {
-    input
-        .lines()
-        .map(|line| {
-            let mut characters = line.chars();
-            let sign = characters.next().unwrap();
-            let number = characters.collect::<String>().parse::<i32>().unwrap();
-            match sign {
-                '+' => FrequencyChange::Increase(number),
-                '-' => FrequencyChange::Decrease(number),
-                c => panic!("Unexpected character '{}'", c),
-            }
-        })
-        .collect()
+    input.lines().map(FrequencyChange::new).collect()
 }
 
 fn calculate_frequency(changes: Vec<FrequencyChange>) -> i32 {
