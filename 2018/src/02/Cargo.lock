@@ -1,11 +1,14 @@
 [[package]]
-name = "advent_utils"
-version = "0.1.0"
+name = "adventurous"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "day_02"
 version = "0.1.0"
 dependencies = [
- "advent_utils 0.1.0",
+ "adventurous 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
+[metadata]
+"checksum adventurous 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "cdd88349f65ae84170b70ce58e55e9869e4ede637a04b71c03ef553556e9c12e"

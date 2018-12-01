@@ -5,4 +5,4 @@ authors = ["Marshall Bowers <elliott.codes@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-advent_utils = { path = "../advent_utils" }
+adventurous = "0.0.1"

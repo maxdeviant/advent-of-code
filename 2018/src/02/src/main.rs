@@ -1,12 +1,14 @@
-extern crate advent_utils;
+extern crate adventurous;
 
-fn part_one(input: &str) {}
+use adventurous::Input;
 
-fn part_two(input: &str) {}
+fn part_one(input: &Input) {}
+
+fn part_two(input: &Input) {}
 
 fn main() {
     fn main() -> std::io::Result<()> {
-        let input = advent_utils::read_input("input.txt")?;
+        let input = Input::from_file("input.txt")?;
 
         Ok(())
     }
@@ -18,14 +20,14 @@ mod tests {
 
     #[test]
     fn test_part_one_solution() -> std::io::Result<()> {
-        let input = advent_utils::read_input("input.txt")?;
+        let input = Input::from_file("input.txt")?;
 
         Ok(())
     }
 
     #[test]
     fn test_part_two_solution() -> std::io::Result<()> {
-        let input = advent_utils::read_input("input.txt")?;
+        let input = Input::from_file("input.txt")?;
 
         Ok(())
     }
