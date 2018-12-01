@@ -1,6 +1,6 @@
+extern crate advent_utils;
+
 use std::collections::{HashSet, VecDeque};
-use std::fs::File;
-use std::io::Read;
 
 #[derive(Debug, Clone)]
 enum FrequencyChange {
@@ -66,12 +66,10 @@ fn part_two(input: &String) -> i32 {
 }
 
 fn main() -> std::io::Result<()> {
-    let mut file = File::open("input.txt")?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
+    let input = advent_utils::read_input("input.txt")?;
 
-    println!("Part One: {}", part_one(&contents));
-    println!("Part Two: {}", part_two(&contents));
+    println!("Part One: {}", part_one(&input));
+    println!("Part Two: {}", part_two(&input));
 
     Ok(())
 }
