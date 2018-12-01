@@ -79,6 +79,20 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_part_one_solution() -> std::io::Result<()> {
+        let input = advent_utils::read_input("input.txt")?;
+
+        Ok(assert_eq!(part_one(&input), 490))
+    }
+
+    #[test]
+    fn test_part_two_solution() -> std::io::Result<()> {
+        let input = advent_utils::read_input("input.txt")?;
+
+        Ok(assert_eq!(part_two(&input), 70357))
+    }
+
+    #[test]
     fn test_calculate_frequency() {
         let changes = vec![
             FrequencyChange::Increase(1),
