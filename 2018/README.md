@@ -2,6 +2,6 @@
 
 ## Other Participants
 
-| Repository | Language |
-| ---------- | -------- |
-
+| Repository                                                                  | Language |
+| --------------------------------------------------------------------------- | -------- |
+| [agmcleod/adventofcode-2018](https://github.com/agmcleod/adventofcode-2018) | Rust     |
