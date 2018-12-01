@@ -11,3 +11,22 @@ fn main() {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part_one_solution() -> std::io::Result<()> {
+        let input = advent_utils::read_input("input.txt")?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_two_solution() -> std::io::Result<()> {
+        let input = advent_utils::read_input("input.txt")?;
+
+        Ok(())
+    }
+}
