@@ -9,7 +9,7 @@ enum FrequencyChange {
 }
 
 impl FrequencyChange {
-    pub fn new(input: &str) -> Self {
+    pub fn from_str(input: &str) -> Self {
         let mut characters = input.chars();
         let sign = characters.next().unwrap();
         let number = characters.collect::<String>().parse::<i32>().unwrap();
@@ -29,7 +29,7 @@ impl FrequencyChange {
 }
 
 fn read_frequency_changes_from_input(input: &String) -> Vec<FrequencyChange> {
-    input.lines().map(FrequencyChange::new).collect()
+    input.lines().map(FrequencyChange::from_str).collect()
 }
 
 fn calculate_frequency(changes: Vec<FrequencyChange>) -> i32 {
