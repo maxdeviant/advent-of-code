@@ -1,0 +1,11 @@
+[[package]]
+name = "advent_utils"
+version = "0.1.0"
+
+[[package]]
+name = "day_02"
+version = "0.1.0"
+dependencies = [
+ "advent_utils 0.1.0",
+]
+
