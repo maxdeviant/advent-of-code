@@ -1,6 +1,8 @@
-extern crate advent_utils;
+extern crate adventurous;
 
 use std::collections::{HashSet, VecDeque};
+
+use adventurous::Input;
 
 #[derive(Debug, Clone)]
 enum FrequencyChange {
@@ -28,8 +30,8 @@ impl FrequencyChange {
     }
 }
 
-fn read_frequency_changes_from_input(input: &str) -> Vec<FrequencyChange> {
-    input.lines().map(FrequencyChange::from_str).collect()
+fn read_frequency_changes_from_input(input: &Input) -> Vec<FrequencyChange> {
+    input.value.lines().map(FrequencyChange::from_str).collect()
 }
 
 fn calculate_frequency(changes: Vec<FrequencyChange>) -> i32 {
@@ -59,16 +61,16 @@ fn find_first_repeated_frequency(changes: Vec<FrequencyChange>) -> i32 {
     }
 }
 
-fn part_one(input: &str) -> i32 {
+fn part_one(input: &Input) -> i32 {
     calculate_frequency(read_frequency_changes_from_input(input))
 }
 
-fn part_two(input: &str) -> i32 {
+fn part_two(input: &Input) -> i32 {
     find_first_repeated_frequency(read_frequency_changes_from_input(input))
 }
 
 fn main() -> std::io::Result<()> {
-    let input = advent_utils::read_input("input.txt")?;
+    let input = Input::from_file("input.txt")?;
 
     println!("Part One: {}", part_one(&input));
     println!("Part Two: {}", part_two(&input));
@@ -82,14 +84,14 @@ mod tests {
 
     #[test]
     fn test_part_one_solution() -> std::io::Result<()> {
-        let input = advent_utils::read_input("input.txt")?;
+        let input = Input::from_file("input.txt")?;
 
         Ok(assert_eq!(part_one(&input), 490))
     }
 
     #[test]
     fn test_part_two_solution() -> std::io::Result<()> {
-        let input = advent_utils::read_input("input.txt")?;
+        let input = Input::from_file("input.txt")?;
 
         Ok(assert_eq!(part_two(&input), 70357))
     }

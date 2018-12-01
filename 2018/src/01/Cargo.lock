@@ -1,11 +1,11 @@
 [[package]]
-name = "advent_utils"
-version = "0.1.0"
+name = "adventurous"
+version = "0.0.1"
 
 [[package]]
 name = "day_01"
 version = "0.1.0"
 dependencies = [
- "advent_utils 0.1.0",
+ "adventurous 0.0.1",
 ]
 
