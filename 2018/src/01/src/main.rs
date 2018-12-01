@@ -8,6 +8,15 @@ enum FrequencyChange {
     Decrease(i32),
 }
 
+impl FrequencyChange {
+    pub fn apply(&self, value: i32) -> i32 {
+        match self {
+            FrequencyChange::Increase(n) => value + n,
+            FrequencyChange::Decrease(n) => value - n,
+        }
+    }
+}
+
 fn read_frequency_changes_from_input(input: &String) -> Vec<FrequencyChange> {
     input
         .lines()
@@ -25,10 +34,7 @@ fn read_frequency_changes_from_input(input: &String) -> Vec<FrequencyChange> {
 }
 
 fn calculate_frequency(changes: Vec<FrequencyChange>) -> i32 {
-    changes.into_iter().fold(0, |acc, change| match change {
-        FrequencyChange::Increase(n) => acc + n,
-        FrequencyChange::Decrease(n) => acc - n,
-    })
+    changes.into_iter().fold(0, |acc, change| change.apply(acc))
 }
 
 fn find_first_repeated_frequency(changes: Vec<FrequencyChange>) -> i32 {
@@ -43,10 +49,7 @@ fn find_first_repeated_frequency(changes: Vec<FrequencyChange>) -> i32 {
             pending_changes.clone_from(&VecDeque::from(changes.clone()));
         }
 
-        let next_frequency = match pending_changes.pop_front().unwrap() {
-            FrequencyChange::Increase(n) => frequency + n,
-            FrequencyChange::Decrease(n) => frequency - n,
-        };
+        let next_frequency = pending_changes.pop_front().unwrap().apply(frequency);
 
         if already_seen.contains(&next_frequency) {
             break next_frequency;
