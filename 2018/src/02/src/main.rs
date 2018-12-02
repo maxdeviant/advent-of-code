@@ -1,31 +1,15 @@
 extern crate adventurous;
 
-use std::collections::HashMap;
-
-use adventurous::Input;
-
-fn count_letters(id: &str) -> HashMap<char, i32> {
-    let mut letter_counts = HashMap::new();
-
-    for letter in id.chars() {
-        if !letter_counts.contains_key(&letter) {
-            letter_counts.insert(letter, 0);
-        }
-
-        *letter_counts.get_mut(&letter).unwrap() += 1;
-    }
-
-    letter_counts
-}
+use adventurous::{CharCounts, Input};
 
 fn contains_any_letter_two_times(id: &str) -> bool {
-    count_letters(id)
+    id.char_counts()
         .into_iter()
         .any(|(_letter, occurences)| occurences == 2)
 }
 
 fn contains_any_letter_three_times(id: &str) -> bool {
-    count_letters(id)
+    id.char_counts()
         .into_iter()
         .any(|(_letter, occurrences)| occurrences == 3)
 }

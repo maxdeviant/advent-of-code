@@ -5,4 +5,4 @@ authors = ["Marshall Bowers <elliott.codes@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-adventurous = "0.0.1"
+adventurous = "0.0.3"
