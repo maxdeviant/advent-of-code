@@ -45,7 +45,7 @@ impl Claim {
         };
 
         Self {
-            id: id_part.unwrap_or("").to_string(),
+            id: id_part.unwrap_or("")[1..].to_string(),
             x,
             y,
             width,
@@ -58,7 +58,7 @@ fn count_overlapping_squares(claims: Vec<Claim>) -> i32 {
     let mut fabric: Vec<Vec<i32>> = Vec::with_capacity(1000);
     for x in 0..1000 {
         fabric.push(Vec::with_capacity(1000));
-        for y in 0..1000 {
+        for _y in 0..1000 {
             fabric[x].push(0);
         }
     }
@@ -83,15 +83,57 @@ fn count_overlapping_squares(claims: Vec<Claim>) -> i32 {
     overlapping
 }
 
+fn find_claim_with_no_overlaps(claims: Vec<Claim>) -> Option<Claim> {
+    let mut fabric: Vec<Vec<i32>> = Vec::with_capacity(1000);
+    for x in 0..1000 {
+        fabric.push(Vec::with_capacity(1000));
+        for _y in 0..1000 {
+            fabric[x].push(0);
+        }
+    }
+
+    for claim in &claims {
+        for x in claim.x..claim.x + claim.width {
+            for y in claim.y..claim.y + claim.height {
+                fabric[x as usize][y as usize] += 1;
+            }
+        }
+    }
+
+    for claim in claims {
+        let mut overlaps = false;
+
+        for x in claim.x..claim.x + claim.width {
+            for y in claim.y..claim.y + claim.height {
+                if fabric[x as usize][y as usize] > 1 {
+                    overlaps = true;
+                }
+            }
+        }
+
+        if !overlaps {
+            return Some(claim);
+        }
+    }
+
+    None
+}
+
 fn part_one(input: &Input) -> i32 {
     let claims = input.value.lines().map(Claim::from_str).collect();
     count_overlapping_squares(claims)
+}
+
+fn part_two(input: &Input) -> String {
+    let claims = input.value.lines().map(Claim::from_str).collect();
+    find_claim_with_no_overlaps(claims).unwrap().id
 }
 
 fn main() -> std::io::Result<()> {
     let input = Input::from_file("input.txt")?;
 
     println!("Part One: {}", part_one(&input));
+    println!("Part Two: {}", part_two(&input));
 
     Ok(())
 }
@@ -111,7 +153,7 @@ mod tests {
     fn test_part_two_solution() -> std::io::Result<()> {
         let input = Input::from_file("input.txt")?;
 
-        Ok(assert_eq!(true, true))
+        Ok(assert_eq!(part_two(&input), "717"))
     }
 
     #[test]
