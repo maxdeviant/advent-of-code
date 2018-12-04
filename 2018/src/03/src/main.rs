@@ -54,14 +54,38 @@ impl Claim {
     }
 }
 
-fn part_one(input: &Input) -> i32 {
-    let claims = input.value.lines().map(Claim::from_str);
-
-    for claim in claims {
-        println!("{:?}", claim);
+fn count_overlapping_squares(claims: Vec<Claim>) -> i32 {
+    let mut fabric: Vec<Vec<i32>> = Vec::with_capacity(1000);
+    for x in 0..1000 {
+        fabric.push(Vec::with_capacity(1000));
+        for y in 0..1000 {
+            fabric[x].push(0);
+        }
     }
 
-    0
+    for claim in claims {
+        for x in claim.x..claim.x + claim.width {
+            for y in claim.y..claim.y + claim.height {
+                fabric[x as usize][y as usize] += 1;
+            }
+        }
+    }
+
+    let mut overlapping = 0;
+    for x in 0..1000 {
+        for y in 0..1000 {
+            if fabric[x][y] > 1 {
+                overlapping += 1;
+            }
+        }
+    }
+
+    overlapping
+}
+
+fn part_one(input: &Input) -> i32 {
+    let claims = input.value.lines().map(Claim::from_str).collect();
+    count_overlapping_squares(claims)
 }
 
 fn main() -> std::io::Result<()> {
@@ -80,7 +104,7 @@ mod tests {
     fn test_part_one_solution() -> std::io::Result<()> {
         let input = Input::from_file("input.txt")?;
 
-        Ok(assert_eq!(true, true))
+        Ok(assert_eq!(part_one(&input), 97218))
     }
 
     #[test]
@@ -88,5 +112,15 @@ mod tests {
         let input = Input::from_file("input.txt")?;
 
         Ok(assert_eq!(true, true))
+    }
+
+    #[test]
+    fn test_count_overlapping_squares() {
+        let claims = vec![
+            Claim::from_str("#1 @ 1,3: 4x4"),
+            Claim::from_str("#2 @ 3,1: 4x4"),
+            Claim::from_str("#3 @ 5,5: 2x2"),
+        ];
+        assert_eq!(count_overlapping_squares(claims), 4)
     }
 }
