@@ -1,0 +1,14 @@
+[[package]]
+name = "adventurous"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "day_03"
+version = "0.1.0"
+dependencies = [
+ "adventurous 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[metadata]
+"checksum adventurous 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "a7fdae38a62409bb87e496533e0fbd2592caa791dbee755dce20a0601121d6bc"
