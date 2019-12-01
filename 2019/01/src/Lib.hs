@@ -1,6 +1,7 @@
 module Lib
-    ( someFunc
-    ) where
+  ( requiredFuel
+  ) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import Control.Arrow ((>>>))
+
+requiredFuel = (/ 3) >>> floor >>> (subtract 2)
