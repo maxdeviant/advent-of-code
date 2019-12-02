@@ -8,8 +8,8 @@ import Data.List.Split (splitOn)
 evalIntcode :: [Int] -> [Int]
 evalIntcode program = evalIntcode' 0 program
   where
-    evalIntcode' readPosition instructions =
-      case drop readPosition instructions of
+    evalIntcode' instructionPointer instructions =
+      case drop instructionPointer instructions of
         [] -> instructions
         99:_ -> instructions
         opcode:positionA:positionB:outputPosition:_ ->
@@ -20,7 +20,7 @@ evalIntcode program = evalIntcode' 0 program
               inputA = instructions !! positionA
               inputB = instructions !! positionB
            in evalIntcode'
-                (readPosition + 4)
+                (instructionPointer + 4)
                 (setAt outputPosition (operation inputA inputB) instructions)
 
 restoreProgramAlarmState :: [Int] -> [Int]
