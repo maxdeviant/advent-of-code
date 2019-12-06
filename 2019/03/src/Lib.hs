@@ -47,10 +47,8 @@ plotPath moves = plotPath' [] (0, 0) moves
               MoveDown yDelta -> (0, -yDelta)
               MoveLeft xDelta -> (-xDelta, 0)
               MoveRight xDelta -> (xDelta, 0)
-       in plotPath'
-            (Line position (position `addPoints` change) : path)
-            (position `addPoints` change)
-            moves
+          endPosition = position `addPoints` change
+       in plotPath' (Line position endPosition : path) endPosition moves
 
 expand :: Line -> [Point]
 expand (Line (x1, y1) (x2, y2)) =
