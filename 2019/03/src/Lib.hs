@@ -1,5 +1,6 @@
 module Lib
   ( partOne
+  , partTwo
   ) where
 
 import qualified Data.List as List
@@ -80,3 +81,12 @@ partOne input =
       pathTwo = plotPath . parseMoves $ wireTwo
       intersections = filter (/= (0, 0)) $ findIntersections pathOne pathTwo
    in foldr1 min $ map (manhattanDistance (0, 0)) intersections
+
+partTwo :: String -> Int
+partTwo input =
+  let (wireOne:wireTwo:[]) = lines input
+      parseMoves = map parseMove . splitOn ","
+      pathOne = plotPath . parseMoves $ wireOne
+      pathTwo = plotPath . parseMoves $ wireTwo
+      intersections = filter (/= (0, 0)) $ findIntersections pathOne pathTwo
+   in 0
