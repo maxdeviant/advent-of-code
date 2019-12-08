@@ -1,6 +1,6 @@
 module Lib
   ( partOne
-  , digits
+  , partTwo
   ) where
 
 import Data.List.Split (splitOn)
@@ -37,5 +37,25 @@ possiblePasswords lower upper =
 
 partOne :: String -> Int
 partOne input = length $ possiblePasswords (read lower) (read upper)
+  where
+    (lower:upper:[]) = splitOn "-" input
+
+containsIsolatedDoubles :: Int -> Bool
+containsIsolatedDoubles n = containsIsolatedDoubles' (-1) $ digits n
+  where
+    containsIsolatedDoubles' _ [] = False
+    containsIsolatedDoubles' _ (_:[]) = False
+    containsIsolatedDoubles' lastDigit (x:y:[]) = x /= lastDigit && x == y
+    containsIsolatedDoubles' lastDigit (x:y:z:rest) =
+      if x /= lastDigit && x == y && y /= z
+        then True
+        else containsIsolatedDoubles' x (y : z : rest)
+
+possiblePasswordsAmended :: Int -> Int -> [Int]
+possiblePasswordsAmended lower upper =
+  filter containsIsolatedDoubles $ possiblePasswords lower upper
+
+partTwo :: String -> Int
+partTwo input = length $ possiblePasswordsAmended (read lower) (read upper)
   where
     (lower:upper:[]) = splitOn "-" input
