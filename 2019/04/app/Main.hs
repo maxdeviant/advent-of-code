@@ -5,7 +5,7 @@ import Lib
 main :: IO ()
 main = do
   input <- readFile "input.txt"
-  print "Part One"
+  putStrLn "Part One"
   print $ partOne input
-  print "Part Two"
+  putStrLn "Part Two"
   print $ partTwo input
