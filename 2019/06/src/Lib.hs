@@ -45,7 +45,8 @@ buildUniversalOrbitMap input = buildUniversalOrbitMap' centerOfMass orbits
     buildUniversalOrbitMap' (CenterOfMass orbiters) (orbit:orbits) =
       case untilJust (tryInsertOrbit orbit) orbiters of
         Just orbiters' -> CenterOfMass (orbiters ++ orbiters')
-        Nothing -> buildUniversalOrbitMap' (CenterOfMass orbiters) (orbits ++ [orbit])
+        Nothing ->
+          buildUniversalOrbitMap' (CenterOfMass orbiters) (orbits ++ [orbit])
 
 partOne :: String -> Int
 partOne input = 0
