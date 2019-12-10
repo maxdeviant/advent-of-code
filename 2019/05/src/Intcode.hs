@@ -19,13 +19,59 @@ data Parameter =
   Parameter ParameterMode Int
   deriving (Show)
 
+class Evaluate a where
+  evaluate :: a -> [Int] -> [Int]
+
+data AddInstruction =
+  AddInstruction Parameter Parameter Int
+  deriving (Show)
+
+instance Evaluate AddInstruction where
+  evaluate (AddInstruction paramA paramB output) program = program
+
+data MultiplyInstruction =
+  MultiplyInstruction Parameter Parameter Int
+  deriving (Show)
+
+instance Evaluate MultiplyInstruction where
+  evaluate (MultiplyInstruction paramA paramB output) program = program
+
+data InputInstruction =
+  InputInstruction Parameter Int
+  deriving (Show)
+
+instance Evaluate InputInstruction where
+  evaluate (InputInstruction _ _) program = program
+
+data OutputInstruction =
+  OutputInstruction Int
+  deriving (Show)
+
+instance Evaluate OutputInstruction where
+  evaluate (OutputInstruction _) program = program
+
 data Instruction
-  = Add Parameter Parameter Int
-  | Multiply Parameter Parameter Int
-  | Input Parameter Int
-  | Output Int
+  = Add AddInstruction
+  | Multiply MultiplyInstruction
+  | Input InputInstruction
+  | Output OutputInstruction
   | End
   deriving (Show)
+
+instance Evaluate Instruction where
+  evaluate instruction program = operation program
+    where
+      operation =
+        case instruction of
+          Add instruction -> evaluate instruction
+          Multiply instruction -> evaluate instruction
+          Input instruction -> evaluate instruction
+          Output instruction -> evaluate instruction
+          End -> id
+
+readParameter :: Parameter -> [Int] -> Int
+readParameter (Parameter PositionMode position) program = program !! position
+readParameter (Parameter ImmediateMode value) _ = value
 
 eval :: [Int] -> [Int]
 eval program = eval' 0 program
