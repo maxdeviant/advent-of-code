@@ -1,6 +1,5 @@
 module Lib
   ( partOne
-  , buildUniversalOrbitMap
   ) where
 
 import Data.List (partition)
@@ -49,5 +48,13 @@ buildUniversalOrbitMap input = buildUniversalOrbitMap' centerOfMass orbits
         Nothing ->
           buildUniversalOrbitMap' (CenterOfMass orbiters) (orbits ++ [orbit])
 
+countDirectAndIndirectOrbits :: UniversalOrbitMap -> Int
+countDirectAndIndirectOrbits (CenterOfMass orbiters) =
+  sum $ map (countDirectAndIndirectOrbits' 0) orbiters
+  where
+    countDirectAndIndirectOrbits' acc (Orbiter _ []) = acc + 1
+    countDirectAndIndirectOrbits' acc (Orbiter _ orbiters) =
+      acc + 1 + (sum $ map (countDirectAndIndirectOrbits' (acc + 1)) orbiters)
+
 partOne :: String -> Int
-partOne input = 0
+partOne = countDirectAndIndirectOrbits . buildUniversalOrbitMap

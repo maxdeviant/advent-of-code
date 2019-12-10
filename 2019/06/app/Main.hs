@@ -6,7 +6,6 @@ main :: IO ()
 main = do
   input <- readFile "input.txt"
   putStrLn "Part One"
-  print $ buildUniversalOrbitMap input
   print $ partOne input
   -- putStrLn "Part Two"
   -- print $ partTwo input
