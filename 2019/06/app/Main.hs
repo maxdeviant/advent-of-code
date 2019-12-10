@@ -7,5 +7,5 @@ main = do
   input <- readFile "input.txt"
   putStrLn "Part One"
   print $ partOne input
-  -- putStrLn "Part Two"
-  -- print $ partTwo input
+  putStrLn "Part Two"
+  print $ partTwo input

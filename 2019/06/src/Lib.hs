@@ -1,5 +1,6 @@
 module Lib
   ( partOne
+  , partTwo
   ) where
 
 import Data.List (partition)
@@ -58,3 +59,9 @@ countDirectAndIndirectOrbits (CenterOfMass orbiters) =
 
 partOne :: String -> Int
 partOne = countDirectAndIndirectOrbits . buildUniversalOrbitMap
+
+transfersBetweenOrbits :: String -> String -> UniversalOrbitMap -> Int
+transfersBetweenOrbits origin destination orbitMap = 0
+
+partTwo :: String -> Int
+partTwo = transfersBetweenOrbits "YOU" "SAN" . buildUniversalOrbitMap
