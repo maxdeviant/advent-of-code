@@ -10,6 +10,14 @@ digits :: Integral a => a -> [a]
 digits 0 = []
 digits n = digits (n `div` 10) ++ [n `mod` 10]
 
+lastN :: Int -> [a] -> [a]
+lastN n list = drop (length list - n) list
+
+leftPad :: Int -> [Int] -> [Int]
+leftPad n list = replicate (n - length list') 0 ++ list'
+  where
+    list' = take n list
+
 data ParameterMode
   = PositionMode
   | ImmediateMode
@@ -20,35 +28,43 @@ data Parameter =
   deriving (Show)
 
 class Evaluate a where
-  evaluate :: a -> [Int] -> [Int]
+  evaluate :: a -> [Int] -> (Int, [Int])
 
 data AddInstruction =
   AddInstruction Parameter Parameter Int
   deriving (Show)
 
 instance Evaluate AddInstruction where
-  evaluate (AddInstruction paramA paramB output) program = program
+  evaluate (AddInstruction paramA paramB outputPosition) program =
+    (4, setAt outputPosition (inputA + inputB) program)
+    where
+      inputA = readParameter paramA program
+      inputB = readParameter paramB program
 
 data MultiplyInstruction =
   MultiplyInstruction Parameter Parameter Int
   deriving (Show)
 
 instance Evaluate MultiplyInstruction where
-  evaluate (MultiplyInstruction paramA paramB output) program = program
+  evaluate (MultiplyInstruction paramA paramB outputPosition) program =
+    (4, setAt outputPosition (inputA * inputB) program)
+    where
+      inputA = readParameter paramA program
+      inputB = readParameter paramB program
 
 data InputInstruction =
   InputInstruction Parameter Int
   deriving (Show)
 
 instance Evaluate InputInstruction where
-  evaluate (InputInstruction _ _) program = program
+  evaluate (InputInstruction _ _) program = (0, program)
 
 data OutputInstruction =
   OutputInstruction Int
   deriving (Show)
 
 instance Evaluate OutputInstruction where
-  evaluate (OutputInstruction _) program = program
+  evaluate (OutputInstruction _) program = (0, program)
 
 data Instruction
   = Add AddInstruction
@@ -67,11 +83,16 @@ instance Evaluate Instruction where
           Multiply instruction -> evaluate instruction
           Input instruction -> evaluate instruction
           Output instruction -> evaluate instruction
-          End -> id
+          End -> \program -> (0, program)
 
 readParameter :: Parameter -> [Int] -> Int
 readParameter (Parameter PositionMode position) program = program !! position
 readParameter (Parameter ImmediateMode value) _ = value
+
+parseParameterMode :: Int -> ParameterMode
+parseParameterMode 0 = PositionMode
+parseParameterMode 1 = ImmediateMode
+parseParameterMode _ = error "Invalid parameter mode."
 
 eval :: [Int] -> [Int]
 eval program = eval' 0 program
@@ -79,17 +100,27 @@ eval program = eval' 0 program
     eval' instructionPointer instructions =
       case drop instructionPointer instructions of
         [] -> instructions
-        99:_ -> instructions
-        opcode:positionA:positionB:outputPosition:_ ->
-          let operation =
-                case opcode of
-                  1 -> (+)
-                  2 -> (*)
-              inputA = instructions !! positionA
-              inputB = instructions !! positionB
-           in eval'
-                (instructionPointer + 4)
-                (setAt outputPosition (operation inputA inputB) instructions)
+        99:_ -> snd $ evaluate End program
+        opcode:tail ->
+          let (opcode':_:modes) = reverse $ digits opcode
+              modes' = reverse modes
+              instruction =
+                case opcode' of
+                  1 ->
+                    let (inputA:inputB:outputPosition:_) = tail
+                        (_:modeB:modeA:[]) = leftPad 2 modes'
+                        paramA = Parameter (parseParameterMode modeA) inputA
+                        paramB = Parameter (parseParameterMode modeB) inputB
+                     in Add $ AddInstruction paramA paramB outputPosition
+                  2 ->
+                    let (inputA:inputB:outputPosition:_) = tail
+                        (_:modeB:modeA:[]) = leftPad 2 modes'
+                        paramA = Parameter (parseParameterMode modeA) inputA
+                        paramB = Parameter (parseParameterMode modeB) inputB
+                     in Multiply $
+                        MultiplyInstruction paramA paramB outputPosition
+              (movePointer, program) = evaluate instruction program
+           in eval' (instructionPointer + movePointer) program
 
 parse :: String -> [Int]
 parse = map read . splitOn ","
