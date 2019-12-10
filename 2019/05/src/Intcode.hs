@@ -16,11 +16,6 @@ lastN n list = drop (length list - n) list
 rightPad :: Int -> [Int] -> [Int]
 rightPad n list = list ++ replicate (n - length list) 0
 
-leftPad :: Int -> [Int] -> [Int]
-leftPad n list = replicate (n - length list') 0 ++ list'
-  where
-    list' = take n list
-
 data ParameterMode
   = PositionMode
   | ImmediateMode
@@ -121,6 +116,7 @@ eval program = eval' 0 program
                         paramB = Parameter (parseParameterMode modeB) inputB
                      in Multiply $
                         MultiplyInstruction paramA paramB outputPosition
+                  _ -> error "Invalid opcode"
               (movePointer, program') = evaluate instruction program
            in eval' (instructionPointer + movePointer) program'
 
