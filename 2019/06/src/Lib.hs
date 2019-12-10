@@ -44,7 +44,8 @@ buildUniversalOrbitMap input = buildUniversalOrbitMap' centerOfMass orbits
     buildUniversalOrbitMap' orbitMap [] = orbitMap
     buildUniversalOrbitMap' (CenterOfMass orbiters) (orbit:orbits) =
       case untilJust (tryInsertOrbit orbit) orbiters of
-        Just orbiters' -> CenterOfMass (orbiters ++ orbiters')
+        Just orbiters' ->
+          buildUniversalOrbitMap' (CenterOfMass orbiters') orbits
         Nothing ->
           buildUniversalOrbitMap' (CenterOfMass orbiters) (orbits ++ [orbit])
 
