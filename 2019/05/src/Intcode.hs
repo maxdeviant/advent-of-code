@@ -13,6 +13,9 @@ digits n = digits (n `div` 10) ++ [n `mod` 10]
 lastN :: Int -> [a] -> [a]
 lastN n list = drop (length list - n) list
 
+rightPad :: Int -> [Int] -> [Int]
+rightPad n list = list ++ replicate (n - length list) 0
+
 leftPad :: Int -> [Int] -> [Int]
 leftPad n list = replicate (n - length list') 0 ++ list'
   where
@@ -79,11 +82,11 @@ instance Evaluate Instruction where
     where
       operation =
         case instruction of
-          Add instruction -> evaluate instruction
-          Multiply instruction -> evaluate instruction
-          Input instruction -> evaluate instruction
-          Output instruction -> evaluate instruction
-          End -> \program -> (0, program)
+          Add addInstruction -> evaluate addInstruction
+          Multiply multiplyInstruction -> evaluate multiplyInstruction
+          Input inputInstruction -> evaluate inputInstruction
+          Output outputInstruction -> evaluate outputInstruction
+          End -> \program' -> (0, program')
 
 readParameter :: Parameter -> [Int] -> Int
 readParameter (Parameter PositionMode position) program = program !! position
@@ -101,26 +104,25 @@ eval program = eval' 0 program
       case drop instructionPointer instructions of
         [] -> instructions
         99:_ -> snd $ evaluate End program
-        opcode:tail ->
-          let (opcode':_:modes) = reverse $ digits opcode
-              modes' = reverse modes
+        opcode:rest ->
+          let (opcode':_:modes) = rightPad 10 $ reverse $ digits opcode
               instruction =
                 case opcode' of
                   1 ->
-                    let (inputA:inputB:outputPosition:_) = tail
-                        (_:modeB:modeA:[]) = leftPad 2 modes'
+                    let (inputA:inputB:outputPosition:_) = rest
+                        (modeA:modeB:_) = modes
                         paramA = Parameter (parseParameterMode modeA) inputA
                         paramB = Parameter (parseParameterMode modeB) inputB
                      in Add $ AddInstruction paramA paramB outputPosition
                   2 ->
-                    let (inputA:inputB:outputPosition:_) = tail
-                        (_:modeB:modeA:[]) = leftPad 2 modes'
+                    let (inputA:inputB:outputPosition:_) = rest
+                        (modeA:modeB:_) = modes
                         paramA = Parameter (parseParameterMode modeA) inputA
                         paramB = Parameter (parseParameterMode modeB) inputB
                      in Multiply $
                         MultiplyInstruction paramA paramB outputPosition
-              (movePointer, program) = evaluate instruction program
-           in eval' (instructionPointer + movePointer) program
+              (movePointer, program') = evaluate instruction program
+           in eval' (instructionPointer + movePointer) program'
 
 parse :: String -> [Int]
 parse = map read . splitOn ","
