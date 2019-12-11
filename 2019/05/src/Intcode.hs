@@ -65,11 +65,79 @@ instance IntcodeInstruction OutputInstruction where
   evaluate (OutputInstruction position writeOutput) program =
     (MoveInstructionPointer 2, program, [writeOutput $ program !! position])
 
+data JumpIfTrueInstruction =
+  JumpIfTrueInstruction Parameter Parameter
+
+instance IntcodeInstruction JumpIfTrueInstruction where
+  evaluate (JumpIfTrueInstruction paramA paramB) program =
+    ( if inputA /= 0
+        then SetInstructionPointer inputB
+        else MoveInstructionPointer 0
+    , program
+    , [])
+    where
+      inputA = readParameter paramA program
+      inputB = readParameter paramB program
+
+data JumpIfFalseInstruction =
+  JumpIfFalseInstruction Parameter Parameter
+
+instance IntcodeInstruction JumpIfFalseInstruction where
+  evaluate (JumpIfFalseInstruction paramA paramB) program =
+    ( if inputA == 0
+        then SetInstructionPointer inputB
+        else MoveInstructionPointer 0
+    , program
+    , [])
+    where
+      inputA = readParameter paramA program
+      inputB = readParameter paramB program
+
+data LessThanInstruction =
+  LessThanInstruction Parameter Parameter Parameter
+
+instance IntcodeInstruction LessThanInstruction where
+  evaluate (LessThanInstruction paramA paramB paramC) program =
+    ( MoveInstructionPointer 5
+    , setAt
+        outputPosition
+        (if inputA < inputB
+           then 1
+           else 0)
+        program
+    , [])
+    where
+      inputA = readParameter paramA program
+      inputB = readParameter paramB program
+      outputPosition = readParameter paramC program
+
+data EqualsInstruction =
+  EqualsInstruction Parameter Parameter Parameter
+
+instance IntcodeInstruction EqualsInstruction where
+  evaluate (EqualsInstruction paramA paramB paramC) program =
+    ( MoveInstructionPointer 5
+    , setAt
+        outputPosition
+        (if inputA == inputB
+           then 1
+           else 0)
+        program
+    , [])
+    where
+      inputA = readParameter paramA program
+      inputB = readParameter paramB program
+      outputPosition = readParameter paramC program
+
 data Instruction
   = Add AddInstruction
   | Multiply MultiplyInstruction
   | Input InputInstruction
   | Output OutputInstruction
+  | JumpIfTrue JumpIfTrueInstruction
+  | JumpIfFalse JumpIfFalseInstruction
+  | LessThan LessThanInstruction
+  | Equals EqualsInstruction
 
 instance IntcodeInstruction Instruction where
   evaluate instruction program = operation program
@@ -80,6 +148,10 @@ instance IntcodeInstruction Instruction where
           Multiply multiplyInstruction -> evaluate multiplyInstruction
           Input inputInstruction -> evaluate inputInstruction
           Output outputInstruction -> evaluate outputInstruction
+          JumpIfTrue jumpIfTrueInstruction -> evaluate jumpIfTrueInstruction
+          JumpIfFalse jumpIfFalseInstruction -> evaluate jumpIfFalseInstruction
+          LessThan lessThanInstruction -> evaluate lessThanInstruction
+          Equals equalsInstruction -> evaluate equalsInstruction
 
 readParameter :: Parameter -> [Int] -> Int
 readParameter (Parameter PositionMode position) program = program !! position
@@ -123,6 +195,32 @@ eval writeOutput program =
                   4 ->
                     let (position:_) = rest
                      in Output $ OutputInstruction position writeOutput
+                  5 ->
+                    let (inputA:inputB:_) = rest
+                        (modeA:modeB:_) = modes
+                        paramA = Parameter (parseParameterMode modeA) inputA
+                        paramB = Parameter (parseParameterMode modeB) inputB
+                     in JumpIfTrue $ JumpIfTrueInstruction paramA paramB
+                  6 ->
+                    let (inputA:inputB:_) = rest
+                        (modeA:modeB:_) = modes
+                        paramA = Parameter (parseParameterMode modeA) inputA
+                        paramB = Parameter (parseParameterMode modeB) inputB
+                     in JumpIfFalse $ JumpIfFalseInstruction paramA paramB
+                  7 ->
+                    let (inputA:inputB:inputC:_) = rest
+                        (modeA:modeB:modeC:_) = modes
+                        paramA = Parameter (parseParameterMode modeA) inputA
+                        paramB = Parameter (parseParameterMode modeB) inputB
+                        paramC = Parameter (parseParameterMode modeC) inputC
+                     in LessThan $ LessThanInstruction paramA paramB paramC
+                  8 ->
+                    let (inputA:inputB:inputC:_) = rest
+                        (modeA:modeB:modeC:_) = modes
+                        paramA = Parameter (parseParameterMode modeA) inputA
+                        paramB = Parameter (parseParameterMode modeB) inputB
+                        paramC = Parameter (parseParameterMode modeC) inputC
+                     in Equals $ EqualsInstruction paramA paramB paramC
                   invalidOpcode ->
                     error $ "Invalid opcode: " ++ show invalidOpcode
               (updateInstructionPointer, instructions', outputs') =
