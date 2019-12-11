@@ -72,7 +72,7 @@ instance IntcodeInstruction JumpIfTrueInstruction where
   evaluate (JumpIfTrueInstruction paramA paramB) program =
     ( if inputA /= 0
         then SetInstructionPointer inputB
-        else MoveInstructionPointer 0
+        else MoveInstructionPointer 3
     , program
     , [])
     where
@@ -86,7 +86,7 @@ instance IntcodeInstruction JumpIfFalseInstruction where
   evaluate (JumpIfFalseInstruction paramA paramB) program =
     ( if inputA == 0
         then SetInstructionPointer inputB
-        else MoveInstructionPointer 0
+        else MoveInstructionPointer 3
     , program
     , [])
     where
