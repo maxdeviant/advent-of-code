@@ -51,11 +51,12 @@ instance Evaluate MultiplyInstruction where
       inputB = readParameter paramB program
 
 data InputInstruction =
-  InputInstruction Parameter Int
+  InputInstruction Int Int
   deriving (Show)
 
 instance Evaluate InputInstruction where
-  evaluate (InputInstruction _ _) program = (0, program)
+  evaluate (InputInstruction input outputPosition) program =
+    (2, setAt outputPosition input program)
 
 data OutputInstruction =
   OutputInstruction Int
@@ -116,6 +117,9 @@ eval program = eval' 0 program
                         paramB = Parameter (parseParameterMode modeB) inputB
                      in Multiply $
                         MultiplyInstruction paramA paramB outputPosition
+                  3 ->
+                    let (outputPosition:_) = rest
+                     in Input $ InputInstruction 1 outputPosition
                   _ -> error "Invalid opcode"
               (movePointer, program') = evaluate instruction program
            in eval' (instructionPointer + movePointer) program'
