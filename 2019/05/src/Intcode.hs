@@ -34,7 +34,7 @@ data AddInstruction =
 
 instance Evaluate AddInstruction where
   evaluate (AddInstruction paramA paramB outputPosition) program =
-    (4, setAt outputPosition (inputA + inputB) program)
+    (3, setAt outputPosition (inputA + inputB) program)
     where
       inputA = readParameter paramA program
       inputB = readParameter paramB program
@@ -45,7 +45,7 @@ data MultiplyInstruction =
 
 instance Evaluate MultiplyInstruction where
   evaluate (MultiplyInstruction paramA paramB outputPosition) program =
-    (4, setAt outputPosition (inputA * inputB) program)
+    (3, setAt outputPosition (inputA * inputB) program)
     where
       inputA = readParameter paramA program
       inputB = readParameter paramB program
@@ -56,14 +56,14 @@ data InputInstruction =
 
 instance Evaluate InputInstruction where
   evaluate (InputInstruction input outputPosition) program =
-    (2, setAt outputPosition input program)
+    (1, setAt outputPosition input program)
 
 data OutputInstruction =
   OutputInstruction Int
   deriving (Show)
 
 instance Evaluate OutputInstruction where
-  evaluate (OutputInstruction _) program = (0, program)
+  evaluate (OutputInstruction position) program = (1, program)
 
 data Instruction
   = Add AddInstruction
@@ -99,7 +99,7 @@ eval program = eval' 0 program
     eval' instructionPointer instructions =
       case drop instructionPointer instructions of
         [] -> instructions
-        99:_ -> snd $ evaluate End program
+        99:_ -> snd $ evaluate End instructions
         opcode:rest ->
           let (opcode':_:modes) = rightPad 10 $ reverse $ digits opcode
               instruction =
@@ -119,10 +119,15 @@ eval program = eval' 0 program
                         MultiplyInstruction paramA paramB outputPosition
                   3 ->
                     let (outputPosition:_) = rest
-                     in Input $ InputInstruction 1 outputPosition
-                  _ -> error "Invalid opcode"
-              (movePointer, program') = evaluate instruction program
-           in eval' (instructionPointer + movePointer) program'
+                        input = 1
+                     in Input $ InputInstruction input outputPosition
+                  4 ->
+                    let (position:_) = rest
+                     in Output $ OutputInstruction position
+                  invalidOpcode ->
+                    error $ "Invalid opcode: " ++ show invalidOpcode
+              (movePointer, instructions') = evaluate instruction instructions
+           in eval' (instructionPointer + 1 + movePointer) instructions'
 
 parse :: String -> [Int]
 parse = map read . splitOn ","
