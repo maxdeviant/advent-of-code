@@ -25,16 +25,20 @@ data Parameter =
   Parameter ParameterMode Int
   deriving (Show)
 
-class Evaluate a where
-  evaluate :: a -> [Int] -> (Int, [Int])
+class IntcodeInstruction a where
+  parameterCount :: a -> Int
+
+  evaluate :: a -> [Int] -> [Int]
 
 data AddInstruction =
   AddInstruction Parameter Parameter Int
   deriving (Show)
 
-instance Evaluate AddInstruction where
+instance IntcodeInstruction AddInstruction where
+  parameterCount _ = 3
+
   evaluate (AddInstruction paramA paramB outputPosition) program =
-    (3, setAt outputPosition (inputA + inputB) program)
+    setAt outputPosition (inputA + inputB) program
     where
       inputA = readParameter paramA program
       inputB = readParameter paramB program
@@ -43,9 +47,11 @@ data MultiplyInstruction =
   MultiplyInstruction Parameter Parameter Int
   deriving (Show)
 
-instance Evaluate MultiplyInstruction where
+instance IntcodeInstruction MultiplyInstruction where
+  parameterCount _ = 3
+
   evaluate (MultiplyInstruction paramA paramB outputPosition) program =
-    (3, setAt outputPosition (inputA * inputB) program)
+    setAt outputPosition (inputA * inputB) program
     where
       inputA = readParameter paramA program
       inputB = readParameter paramB program
@@ -54,16 +60,20 @@ data InputInstruction =
   InputInstruction Int Int
   deriving (Show)
 
-instance Evaluate InputInstruction where
+instance IntcodeInstruction InputInstruction where
+  parameterCount _ = 1
+
   evaluate (InputInstruction input outputPosition) program =
-    (1, setAt outputPosition input program)
+    setAt outputPosition input program
 
 data OutputInstruction =
   OutputInstruction Int
   deriving (Show)
 
-instance Evaluate OutputInstruction where
-  evaluate (OutputInstruction position) program = (1, program)
+instance IntcodeInstruction OutputInstruction where
+  parameterCount _ = 1
+
+  evaluate (OutputInstruction position) program = program
 
 data Instruction
   = Add AddInstruction
@@ -73,7 +83,15 @@ data Instruction
   | End
   deriving (Show)
 
-instance Evaluate Instruction where
+instance IntcodeInstruction Instruction where
+  parameterCount instruction =
+    case instruction of
+      Add addInstruction -> parameterCount addInstruction
+      Multiply multiplyInstruction -> parameterCount multiplyInstruction
+      Input inputInstruction -> parameterCount inputInstruction
+      Output outputInstruction -> parameterCount outputInstruction
+      End -> 0
+
   evaluate instruction program = operation program
     where
       operation =
@@ -82,7 +100,7 @@ instance Evaluate Instruction where
           Multiply multiplyInstruction -> evaluate multiplyInstruction
           Input inputInstruction -> evaluate inputInstruction
           Output outputInstruction -> evaluate outputInstruction
-          End -> \program' -> (0, program')
+          End -> id
 
 readParameter :: Parameter -> [Int] -> Int
 readParameter (Parameter PositionMode position) program = program !! position
@@ -99,7 +117,7 @@ eval program = eval' 0 program
     eval' instructionPointer instructions =
       case drop instructionPointer instructions of
         [] -> instructions
-        99:_ -> snd $ evaluate End instructions
+        99:_ -> evaluate End instructions
         opcode:rest ->
           let (opcode':_:modes) = rightPad 10 $ reverse $ digits opcode
               instruction =
@@ -126,8 +144,8 @@ eval program = eval' 0 program
                      in Output $ OutputInstruction position
                   invalidOpcode ->
                     error $ "Invalid opcode: " ++ show invalidOpcode
-              (movePointer, instructions') = evaluate instruction instructions
-           in eval' (instructionPointer + 1 + movePointer) instructions'
+              instructions' = evaluate instruction instructions
+           in eval' (instructionPointer + 1 + parameterCount instruction) instructions'
 
 parse :: String -> [Int]
 parse = map read . splitOn ","
