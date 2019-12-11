@@ -94,11 +94,11 @@ instance IntcodeInstruction JumpIfFalseInstruction where
       inputB = readParameter paramB program
 
 data LessThanInstruction =
-  LessThanInstruction Parameter Parameter Parameter
+  LessThanInstruction Parameter Parameter Int
 
 instance IntcodeInstruction LessThanInstruction where
-  evaluate (LessThanInstruction paramA paramB paramC) program =
-    ( MoveInstructionPointer 5
+  evaluate (LessThanInstruction paramA paramB outputPosition) program =
+    ( MoveInstructionPointer 4
     , setAt
         outputPosition
         (if inputA < inputB
@@ -109,14 +109,13 @@ instance IntcodeInstruction LessThanInstruction where
     where
       inputA = readParameter paramA program
       inputB = readParameter paramB program
-      outputPosition = readParameter paramC program
 
 data EqualsInstruction =
-  EqualsInstruction Parameter Parameter Parameter
+  EqualsInstruction Parameter Parameter Int
 
 instance IntcodeInstruction EqualsInstruction where
-  evaluate (EqualsInstruction paramA paramB paramC) program =
-    ( MoveInstructionPointer 5
+  evaluate (EqualsInstruction paramA paramB outputPosition) program =
+    ( MoveInstructionPointer 4
     , setAt
         outputPosition
         (if inputA == inputB
@@ -127,7 +126,6 @@ instance IntcodeInstruction EqualsInstruction where
     where
       inputA = readParameter paramA program
       inputB = readParameter paramB program
-      outputPosition = readParameter paramC program
 
 data Instruction
   = Add AddInstruction
@@ -162,8 +160,8 @@ parseParameterMode 0 = PositionMode
 parseParameterMode 1 = ImmediateMode
 parseParameterMode _ = error "Invalid parameter mode."
 
-eval :: (Int -> IO ()) -> [Int] -> ([Int], [IO ()])
-eval writeOutput program =
+eval :: Int -> (Int -> IO ()) -> [Int] -> ([Int], [IO ()])
+eval programInput writeOutput program =
   let (program', outputs) = eval' 0 program []
    in (program', outputs)
   where
@@ -190,7 +188,7 @@ eval writeOutput program =
                         MultiplyInstruction paramA paramB outputPosition
                   3 ->
                     let (outputPosition:_) = rest
-                        input = 1
+                        input = programInput
                      in Input $ InputInstruction input outputPosition
                   4 ->
                     let (position:_) = rest
@@ -209,18 +207,16 @@ eval writeOutput program =
                      in JumpIfFalse $ JumpIfFalseInstruction paramA paramB
                   7 ->
                     let (inputA:inputB:inputC:_) = rest
-                        (modeA:modeB:modeC:_) = modes
+                        (modeA:modeB:_) = modes
                         paramA = Parameter (parseParameterMode modeA) inputA
                         paramB = Parameter (parseParameterMode modeB) inputB
-                        paramC = Parameter (parseParameterMode modeC) inputC
-                     in LessThan $ LessThanInstruction paramA paramB paramC
+                     in LessThan $ LessThanInstruction paramA paramB inputC
                   8 ->
                     let (inputA:inputB:inputC:_) = rest
-                        (modeA:modeB:modeC:_) = modes
+                        (modeA:modeB:_) = modes
                         paramA = Parameter (parseParameterMode modeA) inputA
                         paramB = Parameter (parseParameterMode modeB) inputB
-                        paramC = Parameter (parseParameterMode modeC) inputC
-                     in Equals $ EqualsInstruction paramA paramB paramC
+                     in Equals $ EqualsInstruction paramA paramB inputC
                   invalidOpcode ->
                     error $ "Invalid opcode: " ++ show invalidOpcode
               (updateInstructionPointer, instructions', outputs') =
