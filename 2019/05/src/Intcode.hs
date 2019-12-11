@@ -20,17 +20,21 @@ data ParameterMode
 data Parameter =
   Parameter ParameterMode Int
 
+data UpdateInstructionPointer
+  = MoveInstructionPointer Int
+  | SetInstructionPointer Int
+
 class IntcodeInstruction a where
-  parameterCount :: a -> Int
-  evaluate :: a -> [Int] -> ([Int], [IO ()])
+  evaluate :: a -> [Int] -> (UpdateInstructionPointer, [Int], [IO ()])
 
 data AddInstruction =
   AddInstruction Parameter Parameter Int
 
 instance IntcodeInstruction AddInstruction where
-  parameterCount _ = 3
   evaluate (AddInstruction paramA paramB outputPosition) program =
-    (setAt outputPosition (inputA + inputB) program, [])
+    ( MoveInstructionPointer 4
+    , setAt outputPosition (inputA + inputB) program
+    , [])
     where
       inputA = readParameter paramA program
       inputB = readParameter paramB program
@@ -39,9 +43,10 @@ data MultiplyInstruction =
   MultiplyInstruction Parameter Parameter Int
 
 instance IntcodeInstruction MultiplyInstruction where
-  parameterCount _ = 3
   evaluate (MultiplyInstruction paramA paramB outputPosition) program =
-    (setAt outputPosition (inputA * inputB) program, [])
+    ( MoveInstructionPointer 4
+    , setAt outputPosition (inputA * inputB) program
+    , [])
     where
       inputA = readParameter paramA program
       inputB = readParameter paramB program
@@ -50,33 +55,23 @@ data InputInstruction =
   InputInstruction Int Int
 
 instance IntcodeInstruction InputInstruction where
-  parameterCount _ = 1
   evaluate (InputInstruction input outputPosition) program =
-    (setAt outputPosition input program, [])
+    (MoveInstructionPointer 2, setAt outputPosition input program, [])
 
 data OutputInstruction =
   OutputInstruction Int (Int -> IO ())
 
 instance IntcodeInstruction OutputInstruction where
-  parameterCount _ = 1
   evaluate (OutputInstruction position writeOutput) program =
-    (program, [writeOutput $ program !! position])
+    (MoveInstructionPointer 2, program, [writeOutput $ program !! position])
 
 data Instruction
   = Add AddInstruction
   | Multiply MultiplyInstruction
   | Input InputInstruction
   | Output OutputInstruction
-  | End [IO ()]
 
 instance IntcodeInstruction Instruction where
-  parameterCount instruction =
-    case instruction of
-      Add addInstruction -> parameterCount addInstruction
-      Multiply multiplyInstruction -> parameterCount multiplyInstruction
-      Input inputInstruction -> parameterCount inputInstruction
-      Output outputInstruction -> parameterCount outputInstruction
-      End _ -> 0
   evaluate instruction program = operation program
     where
       operation =
@@ -85,7 +80,6 @@ instance IntcodeInstruction Instruction where
           Multiply multiplyInstruction -> evaluate multiplyInstruction
           Input inputInstruction -> evaluate inputInstruction
           Output outputInstruction -> evaluate outputInstruction
-          End outputs -> \program' -> (program', outputs)
 
 readParameter :: Parameter -> [Int] -> Int
 readParameter (Parameter PositionMode position) program = program !! position
@@ -97,12 +91,14 @@ parseParameterMode 1 = ImmediateMode
 parseParameterMode _ = error "Invalid parameter mode."
 
 eval :: (Int -> IO ()) -> [Int] -> ([Int], [IO ()])
-eval writeOutput program = eval' 0 program []
+eval writeOutput program =
+  let (program', outputs) = eval' 0 program []
+   in (program', outputs)
   where
     eval' instructionPointer instructions outputs =
       case drop instructionPointer instructions of
         [] -> (instructions, outputs)
-        99:_ -> evaluate (End outputs) instructions
+        99:_ -> (instructions, outputs)
         opcode:rest ->
           let (opcode':_:modes) = rightPad 10 $ reverse $ digits opcode
               instruction =
@@ -129,9 +125,12 @@ eval writeOutput program = eval' 0 program []
                      in Output $ OutputInstruction position writeOutput
                   invalidOpcode ->
                     error $ "Invalid opcode: " ++ show invalidOpcode
-              (instructions', outputs') = evaluate instruction instructions
+              (updateInstructionPointer, instructions', outputs') =
+                evaluate instruction instructions
            in eval'
-                (instructionPointer + 1 + parameterCount instruction)
+                (case updateInstructionPointer of
+                   MoveInstructionPointer delta -> instructionPointer + delta
+                   SetInstructionPointer pointer -> pointer)
                 instructions'
                 (outputs ++ outputs')
 
