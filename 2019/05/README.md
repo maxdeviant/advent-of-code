@@ -32,3 +32,34 @@ DE - two-digit opcode,      02 == opcode 2
 <p>It will then perform a series of diagnostic tests confirming that various parts of the Intcode computer, like parameter modes, function correctly. For each test, it will run an <em>output</em> instruction indicating how far the result of the test was from the expected value, where <code>0</code> means the test was successful.  Non-zero outputs mean that a function is not working correctly; check the instructions that were run before the output instruction to see which one failed.</p>
 <p>Finally, the program will output a <em>diagnostic code</em> and immediately halt. This final output isn't an error; an output followed immediately by a halt means the program finished.  If all outputs were zero except the diagnostic code, the diagnostic program ran successfully.</p>
 <p>After providing <code>1</code> to the only input instruction and passing all the tests, <em>what diagnostic code does the program produce?</em></p>
+<h2 id="part2">--- Part Two ---</h2><p>The air conditioner comes online! Its cold air feels good for a while, but then the TEST alarms start to go off. Since the air conditioner <span title="Honestly, I'm not sure what you expected.">can't vent its heat anywhere</span> but back into the spacecraft, it's actually making the air inside the ship <em>warmer</em>.</p>
+<p>Instead, you'll need to use the TEST to extend the <a href="https://en.wikipedia.org/wiki/Spacecraft_thermal_control">thermal radiators</a>. Fortunately, the diagnostic program (your puzzle input) is already equipped for this.  Unfortunately, your Intcode computer is not.</p>
+<p>Your computer is only missing a few opcodes:</p>
+<ul>
+<li>Opcode <code>5</code> is <em>jump-if-true</em>: if the first parameter is <em>non-zero</em>, it sets the instruction pointer to the value from the second parameter. Otherwise, it does nothing.</li>
+<li>Opcode <code>6</code> is <em>jump-if-false</em>: if the first parameter <em>is zero</em>, it sets the instruction pointer to the value from the second parameter. Otherwise, it does nothing.</li>
+<li>Opcode <code>7</code> is <em>less than</em>: if the first parameter is <em>less than</em> the second parameter, it stores <code>1</code> in the position given by the third parameter.  Otherwise, it stores <code>0</code>.</li>
+<li>Opcode <code>8</code> is <em>equals</em>: if the first parameter is <em>equal to</em> the second parameter, it stores <code>1</code> in the position given by the third parameter.  Otherwise, it stores <code>0</code>.</li>
+</ul>
+<p>Like all instructions, these instructions need to support <em>parameter modes</em> as described above.</p>
+<p>Normally, after an instruction is finished, the instruction pointer increases by the number of values in that instruction. <em>However</em>, if the instruction modifies the instruction pointer, that value is used and the instruction pointer is <em>not automatically increased</em>.</p>
+<p>For example, here are several programs that take one input, compare it to the value <code>8</code>, and then produce one output:</p>
+<ul>
+<li><code>3,9,8,9,10,9,4,9,99,-1,8</code> - Using <em>position mode</em>, consider whether the input is <em>equal to</em> <code>8</code>; output <code>1</code> (if it is) or <code>0</code> (if it is not).</li>
+<li><code>3,9,7,9,10,9,4,9,99,-1,8</code> - Using <em>position mode</em>, consider whether the input is <em>less than</em> <code>8</code>; output <code>1</code> (if it is) or <code>0</code> (if it is not).</li>
+<li><code>3,3,1108,-1,8,3,4,3,99</code> - Using <em>immediate mode</em>, consider whether the input is <em>equal to</em> <code>8</code>; output <code>1</code> (if it is) or <code>0</code> (if it is not).</li>
+<li><code>3,3,1107,-1,8,3,4,3,99</code> - Using <em>immediate mode</em>, consider whether the input is <em>less than </em><code>8</code>; output <code>1</code> (if it is) or <code>0</code> (if it is not).</li>
+</ul>
+<p>Here are some jump tests that take an input, then output <code>0</code> if the input was zero or <code>1</code> if the input was non-zero:</p>
+<ul>
+<li><code>3,12,6,12,15,1,13,14,13,4,13,99,-1,0,1,9</code> (using <em>position mode</em>)</li>
+<li><code>3,3,1105,-1,9,1101,0,0,12,4,12,99,1</code> (using <em>immediate mode</em>)</li>
+</ul>
+<p>Here's a larger example:</p>
+<pre><code>3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,
+1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,
+999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99
+</code></pre>
+<p>The above example program uses an input instruction to ask for a single number.  The program will then output <code>999</code> if the input value is below <code>8</code>, output <code>1000</code> if the input value is equal to <code>8</code>, or output <code>1001</code> if the input value is greater than <code>8</code>.</p>
+<p>This time, when the TEST diagnostic program runs its input instruction to get the ID of the system to test, <em>provide it <code>5</code></em>, the ID for the ship's thermal radiator controller. This diagnostic test suite only outputs one number, the <em>diagnostic code</em>.</p>
+<p><em>What is the diagnostic code for system ID <code>5</code>?</em></p>
