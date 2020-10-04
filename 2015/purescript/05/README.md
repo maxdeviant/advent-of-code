@@ -14,3 +14,18 @@
 <li><code>dvszwmarrgswjxmb</code> is naughty because it contains only one vowel.</li>
 </ul>
 <p>How many strings are nice?</p>
+
+<h2 id="part2">--- Part Two ---</h2><p>Realizing the error of his ways, Santa has switched to a better model of determining whether a string is naughty or nice.  None of the old rules apply, as they are all clearly ridiculous.</p>
+<p>Now, a nice string is one with all of the following properties:</p>
+<ul>
+<li>It contains a pair of any two letters that appears at least twice in the string without overlapping, like <code>xyxy</code> (<code>xy</code>) or <code>aabcdefgaa</code> (<code>aa</code>), but not like <code>aaa</code> (<code>aa</code>, but it overlaps).</li>
+<li>It contains at least one letter which repeats with exactly one letter between them, like <code>xyx</code>, <code>abcdefeghi</code> (<code>efe</code>), or even <code>aaa</code>.</li>
+</ul>
+<p>For example:</p>
+<ul>
+<li><code>qjhvhtzxzqqjkmpb</code> is nice because is has a pair that appears twice (<code>qj</code>) and a letter that repeats with exactly one letter between them (<code>zxz</code>).</li>
+<li><code>xxyxx</code> is nice because it has a pair that appears twice and a letter that repeats with one between, even though the letters used by each rule overlap.</li>
+<li><code>uurcxstgmygtbstg</code> is naughty because it has a pair (<code>tg</code>) but no repeat with a single letter between them.</li>
+<li><code>ieodomkazucvgmuy</code> is naughty because it has a repeating letter with one between (<code>odo</code>), but no pair that appears twice.</li>
+</ul>
+<p>How many strings are nice under these new rules?</p>
