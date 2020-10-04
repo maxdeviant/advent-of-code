@@ -32,7 +32,7 @@ areaOfSmallestSide (Present { length: l, width: w, height: h }) = maybe' (\_ -> 
 perimeterOfSmallestSide :: Present -> Int
 perimeterOfSmallestSide (Present { length: l, width: w, height: h }) = maybe' (\_ -> 0) identity $ minimum $ [ perimeter l w, perimeter w h, perimeter h l ]
   where
-  perimeter l w = 2 * (l + w)
+  perimeter length width = 2 * (length + width)
 
 wrappingPaperNeeded :: Present -> Int
 wrappingPaperNeeded present = surfaceArea present + areaOfSmallestSide present
