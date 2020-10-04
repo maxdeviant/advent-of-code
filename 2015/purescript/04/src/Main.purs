@@ -44,8 +44,12 @@ partOne input = do
   n <- map pure $ findNumberProducingHashWithPrefix "00000" secretKey
   pure n
 
-partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo :: String -> Effect (Either String Int)
+partTwo input = do
+  let
+    secretKey = wrap input
+  n <- map pure $ findNumberProducingHashWithPrefix "000000" secretKey
+  pure n
 
 main :: Effect Unit
 main = do
@@ -56,6 +60,7 @@ main = do
     Right answer -> logShow answer
     Left error -> log $ "Failed with: " <> error
   log "Part Two"
-  case partTwo input of
+  partTwoResult <- partTwo input
+  case partTwoResult of
     Right answer -> logShow answer
     Left error -> log $ "Failed with: " <> error
