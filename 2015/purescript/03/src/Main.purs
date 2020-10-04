@@ -90,7 +90,7 @@ assignMoves moves = reverse $ assignMoves' [] (RobotSanta unit) moves
           Santa unit -> RobotSanta
           RobotSanta unit -> Santa
       in
-        assignMoves' ((mover move) : acc) (mover unit) tail
+        assignMoves' (mover move : acc) (mover unit) tail
     Nothing -> acc
 
 deliverPresentsWithRobotSanta :: Array (SantaOrRobotSanta Move) -> DeliveryReport
