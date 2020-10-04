@@ -23,8 +23,16 @@ data Present
 surfaceArea :: Present -> Int
 surfaceArea (Present { length: l, width: w, height: h }) = 2 * l * w + 2 * w * h + 2 * h * l
 
+volume :: Present -> Int
+volume (Present { length, width, height }) = length * width * height
+
 areaOfSmallestSide :: Present -> Int
 areaOfSmallestSide (Present { length: l, width: w, height: h }) = maybe' (\_ -> 0) identity $ minimum [ l * w, w * h, h * l ]
+
+perimeterOfSmallestSide :: Present -> Int
+perimeterOfSmallestSide (Present { length: l, width: w, height: h }) = maybe' (\_ -> 0) identity $ minimum $ [ perimeter l w, perimeter w h, perimeter h l ]
+  where
+  perimeter l w = 2 * (l + w)
 
 wrappingPaperNeeded :: Present -> Int
 wrappingPaperNeeded present = surfaceArea present + areaOfSmallestSide present
@@ -45,8 +53,19 @@ partOne input = do
     # map wrappingPaperNeeded
     # sum
 
+ribbonNeeded :: Present -> Int
+ribbonNeeded present = perimeterOfSmallestSide present + volume present
+
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  presents <-
+    input
+      # lines
+      # traverse parsePresent
+  pure
+    $ presents
+    # map ribbonNeeded
+    # sum
 
 main :: Effect Unit
 main = do
