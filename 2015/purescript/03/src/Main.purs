@@ -1,7 +1,7 @@
 module Main where
 
 import Prelude
-import Data.Array (uncons)
+import Data.Array (reverse, uncons, (:))
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map as Map
@@ -30,6 +30,10 @@ data Move
   | South
   | East
   | West
+
+data SantaOrRobotSanta a
+  = Santa a
+  | RobotSanta a
 
 runMove :: Move -> Coordinates -> Coordinates
 runMove North coordinates = coordinates { y = coordinates.y + 1 }
@@ -75,8 +79,51 @@ partOne input = do
     # Map.filter (\presentsDelivered -> presentsDelivered > 0)
     # Map.size
 
+assignMoves :: Array Move -> Array (SantaOrRobotSanta Move)
+assignMoves moves = reverse $ assignMoves' [] (RobotSanta unit) moves
+  where
+  assignMoves' acc lastMover moves' = case uncons moves' of
+    Just { head: move, tail } ->
+      let
+        mover :: forall a. a -> SantaOrRobotSanta a
+        mover = case lastMover of
+          Santa unit -> RobotSanta
+          RobotSanta unit -> Santa
+      in
+        assignMoves' ((mover move) : acc) (mover unit) tail
+    Nothing -> acc
+
+deliverPresentsWithRobotSanta :: Array (SantaOrRobotSanta Move) -> DeliveryReport
+deliverPresentsWithRobotSanta = deliverPresents' { x: 0, y: 0 } { x: 0, y: 0 } (Map.singleton { x: 0, y: 0 } 2)
+  where
+  deliverPresents' santaLocation robotSantaLocation report moves = case uncons moves of
+    Just { head: move, tail } -> case move of
+      Santa santaMove ->
+        let
+          santaLocation' = runMove santaMove santaLocation
+
+          report' = report # Map.insertWith (+) santaLocation' 1
+        in
+          deliverPresents' santaLocation' robotSantaLocation report' tail
+      RobotSanta robotSantaMove ->
+        let
+          robotSantaLocation' = runMove robotSantaMove robotSantaLocation
+
+          report' = report # Map.insertWith (+) robotSantaLocation' 1
+        in
+          deliverPresents' santaLocation robotSantaLocation' report' tail
+    Nothing -> report
+
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  moves <-
+    input
+      # toCharArray
+      # traverse parseMove
+  pure
+    $ deliverPresentsWithRobotSanta (assignMoves moves)
+    # Map.filter (\presentsDelivered -> presentsDelivered > 0)
+    # Map.size
 
 main :: Effect Unit
 main = do
