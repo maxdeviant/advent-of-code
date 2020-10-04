@@ -1,8 +1,10 @@
 module Main where
 
 import Prelude
+import Data.Array (uncons)
 import Data.Either (Either(..))
 import Data.Foldable (sum)
+import Data.Maybe (Maybe(..))
 import Data.String.CodeUnits (toCharArray)
 import Data.Traversable (traverse)
 import Effect (Effect)
@@ -39,25 +41,45 @@ parseDirection upToken downToken token =
     <> show Down
     <> "."
 
+move :: Direction -> Int
+move Up = 1
+
+move Down = -1
+
+parseDirections :: String -> Either String (Array Direction)
+parseDirections = traverse (parseDirection '(' ')') <<< toCharArray
+
 partOne :: String -> Either String Int
 partOne input = do
-  directions <-
-    input
-      # toCharArray
-      # traverse (parseDirection '(' ')')
+  directions <- parseDirections input
   pure
     $ directions
-    # map
-        ( case _ of
-            Up -> 1
-            Down -> -1
-        )
+    # map move
     # sum
+
+positionOfFirstBasementDirection :: Array Direction -> Either String Int
+positionOfFirstBasementDirection = rec 0 0
+  where
+  rec santasPosition cursor _
+    | santasPosition < 0 = Right cursor
+
+  rec santasPosition cursor directions = case uncons directions of
+    Just { head: direction, tail } -> rec (santasPosition + move direction) (cursor + 1) tail
+    Nothing -> Left "Santa never entered the basement!"
+
+partTwo :: String -> Either String Int
+partTwo input = do
+  directions <- parseDirections input
+  positionOfFirstBasementDirection directions
 
 main :: Effect Unit
 main = do
   input <- readTextFile UTF8 "input.txt"
   log "Part One"
   case partOne input of
+    Right answer -> logShow answer
+    Left error -> log $ "Failed with: " <> error
+  log "Part Two"
+  case partTwo input of
     Right answer -> logShow answer
     Left error -> log $ "Failed with: " <> error
