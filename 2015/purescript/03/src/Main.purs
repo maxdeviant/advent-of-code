@@ -94,25 +94,36 @@ assignMoves moves = reverse $ assignMoves' [] (RobotSanta unit) moves
     Nothing -> acc
 
 deliverPresentsWithRobotSanta :: Array (SantaOrRobotSanta Move) -> DeliveryReport
-deliverPresentsWithRobotSanta = deliverPresents' { x: 0, y: 0 } { x: 0, y: 0 } (Map.singleton { x: 0, y: 0 } 2)
+deliverPresentsWithRobotSanta = deliverPresents' initialLocations (Map.singleton origin 2)
   where
-  deliverPresents' santaLocation robotSantaLocation report moves = case uncons moves of
-    Just { head: move, tail } -> case move of
-      Santa santaMove ->
-        let
-          santaLocation' = runMove santaMove santaLocation
+  origin = { x: 0, y: 0 }
 
-          report' = report # Map.insertWith (+) santaLocation' 1
-        in
-          deliverPresents' santaLocation' robotSantaLocation report' tail
-      RobotSanta robotSantaMove ->
-        let
-          robotSantaLocation' = runMove robotSantaMove robotSantaLocation
+  initialLocations =
+    { santa: origin
+    , robotSanta: origin
+    }
 
-          report' = report # Map.insertWith (+) robotSantaLocation' 1
-        in
-          deliverPresents' santaLocation robotSantaLocation' report' tail
+  deliverPresents' locations report moves = case uncons moves of
+    Just { head: move, tail } ->
+      let
+        { locations, report: report' } = case move of
+          Santa santaMove ->
+            deliver santaMove locations.santa report
+              # \{ location, report: report' } -> { locations: locations { santa = location }, report: report' }
+          RobotSanta robotSantaMove ->
+            deliver robotSantaMove locations.robotSanta report
+              # \{ location, report: report' } -> { locations: locations { robotSanta = location }, report: report' }
+      in
+        deliverPresents' locations report' tail
     Nothing -> report
+
+  deliver move location report =
+    let
+      location' = runMove move location
+
+      report' = report # Map.insertWith (+) location' 1
+    in
+      { location: location', report: report' }
 
 partTwo :: String -> Either String Int
 partTwo input = do
