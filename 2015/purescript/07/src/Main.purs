@@ -1,7 +1,7 @@
 module Main where
 
 import Prelude
-import Data.Array (uncons)
+import Data.Array (concatMap, length, snoc, uncons)
 import Data.Either (Either(..), note)
 import Data.Int as Int
 import Data.Int.Bits as Bits
@@ -12,6 +12,7 @@ import Data.Newtype (class Newtype, over, over2, unwrap, wrap)
 import Data.String (Pattern(..), split, trim)
 import Data.String.Utils (lines)
 import Data.Traversable (traverse)
+import Debug.Trace (trace)
 import Effect (Effect)
 import Effect.Console (log, logShow)
 import Node.Encoding (Encoding(..))
@@ -64,7 +65,7 @@ parseSource source = case Int.fromString source of
   Nothing -> WireSource $ wrap source
 
 parseInstruction :: String -> Either String Instruction
-parseInstruction value = case map trim $ split (Pattern "->") value of
+parseInstruction value = case (concatMap (split (Pattern " "))) $ map trim $ split (Pattern "->") value of
   [ source, destination ] -> Right $ Input (parseSource source) $ wrap destination
   [ a, "AND", b, destination ] -> Right $ And (parseSource a) (parseSource b) $ wrap destination
   [ a, "OR", b, destination ] -> Right $ Or (parseSource a) (parseSource b) $ wrap destination
@@ -80,52 +81,43 @@ parseInstruction value = case map trim $ split (Pattern "->") value of
 type Circuit
   = Map Wire Signal
 
-runInstruction :: Instruction -> Circuit -> Circuit
+data InstructionError
+  = NoSignal
+
+runInstruction :: Instruction -> Circuit -> Either InstructionError Circuit
 runInstruction instruction circuit = case instruction of
-  Input source destination ->
-    let
-      signal = getSignal source
-    in
-      circuit # Map.insert destination signal
-  And sourceA sourceB destination ->
-    let
-      signalA = getSignal sourceA
-
-      signalB = getSignal sourceB
-    in
-      circuit # Map.insert destination (and signalA signalB)
-  Or sourceA sourceB destination ->
-    let
-      signalA = getSignal sourceA
-
-      signalB = getSignal sourceB
-    in
-      circuit # Map.insert destination (or signalA signalB)
-  LeftShift source n destination ->
-    let
-      signal = getSignal source
-    in
-      circuit # Map.insert destination (lshift signal n)
-  RightShift source n destination ->
-    let
-      signal = getSignal source
-    in
-      circuit # Map.insert destination (rshift signal n)
-  Not source destination ->
-    let
-      signal = getSignal source
-    in
-      circuit # Map.insert destination (complement signal)
+  Input source destination -> do
+    signal <- getSignal source
+    pure $ circuit # Map.insert destination signal
+  And sourceA sourceB destination -> do
+    signalA <- getSignal sourceA
+    signalB <- getSignal sourceB
+    pure $ circuit # Map.insert destination (and signalA signalB)
+  Or sourceA sourceB destination -> do
+    signalA <- getSignal sourceA
+    signalB <- getSignal sourceB
+    pure $ circuit # Map.insert destination (or signalA signalB)
+  LeftShift source n destination -> do
+    signal <- getSignal source
+    pure $ circuit # Map.insert destination (lshift signal n)
+  RightShift source n destination -> do
+    signal <- getSignal source
+    pure $ circuit # Map.insert destination (rshift signal n)
+  Not source destination -> do
+    signal <- getSignal source
+    pure $ circuit # Map.insert destination (complement signal)
   where
-  getSignal (WireSource wire) = maybe (wrap 0) identity $ circuit # Map.lookup wire
+  getSignal (WireSource wire) = note NoSignal $ circuit # Map.lookup wire
 
-  getSignal (SignalSource signal) = signal
+  getSignal (SignalSource signal) = Right signal
 
 runCircuit :: Array Instruction -> Circuit
 runCircuit = runCircuit' Map.empty
   where
   runCircuit' circuit instructions = case uncons instructions of
-    Just { head: instruction, tail: rest } -> runCircuit' (runInstruction instruction circuit) rest
+    Just { head: instruction, tail: rest } -> case runInstruction instruction circuit of
+      Right circuit' -> runCircuit' circuit' rest
+      Left NoSignal -> runCircuit' circuit (snoc rest instruction)
     Nothing -> circuit
 
 partOne :: String -> Either String Int
