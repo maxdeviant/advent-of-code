@@ -28,18 +28,20 @@ instance showEscapeSequence :: Show EscapeSequence where
   show DoubleQuote = "DoubleQuote"
   show (AsciiCharCode hexCode) = "AsciiCharCode(" <> hexCode <> ")"
 
-data SubstringOrEscapeSequence
-  = Substring String
+data SantaStringPart
+  = Quote
+  | Substring String
   | EscapeSequence EscapeSequence
 
-derive instance eqSubstringOrEscapeSequence :: Eq SubstringOrEscapeSequence
+derive instance eqSantaStringPart :: Eq SantaStringPart
 
-instance showSubstringOrEscapeSequence :: Show SubstringOrEscapeSequence where
+instance showSantaStringPart :: Show SantaStringPart where
+  show Quote = show '"'
   show (Substring substring) = show substring
   show (EscapeSequence escapeSequence) = show escapeSequence
 
 newtype SantaString
-  = SantaString (List SubstringOrEscapeSequence)
+  = SantaString (List SantaStringPart)
 
 derive instance newtypeSantaString :: Newtype SantaString _
 
@@ -51,9 +53,13 @@ instance showSantaString :: Show SantaString where
 mkSantaString :: String -> SantaString
 mkSantaString =
   mkSantaString' Nil []
+    <<< trimQuotes
     <<< List.fromFoldable
     <<< toCharArray
   where
+  trimQuotes (Cons '"' tail) = tail
+
+  trimQuotes otherwise = otherwise
 
   mkSantaString' acc currentChars chars = case readEscapeSequence chars of
     Just { escapeSequence, chars: chars' } ->
@@ -67,11 +73,13 @@ mkSantaString =
       Cons char tail -> mkSantaString' acc (snoc currentChars char) tail
       Nil ->
         let
+          quote = Cons Quote >>> flip List.snoc Quote
+
           acc' = case mkSubstring currentChars of
             Just substring -> Cons substring acc
             Nothing -> acc
         in
-          SantaString $ List.reverse acc'
+          SantaString $ quote $ List.reverse acc'
 
   mkSubstring = case _ of
     [] -> Nothing
@@ -91,6 +99,7 @@ countCharacters :: SantaString -> { code :: Int, inMemory :: Int }
 countCharacters =
   foldl
     ( \counts x -> case x of
+        Quote -> counts + { code: 1, inMemory: 0 }
         Substring substring ->
           let
             charCount = String.length substring
@@ -105,7 +114,7 @@ countCharacters =
           in
             counts + { code: charsInEscapeSequence, inMemory: 1 }
     )
-    { code: String.length "\"\"", inMemory: 0 }
+    { code: 0, inMemory: 0 }
     <<< unwrap
 
 partOne :: String -> Either String Int
