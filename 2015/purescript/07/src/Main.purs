@@ -1,18 +1,17 @@
 module Main where
 
 import Prelude
-import Data.Array (concatMap, length, snoc, uncons)
+import Data.Array (concatMap, snoc, uncons)
 import Data.Either (Either(..), note)
 import Data.Int as Int
 import Data.Int.Bits as Bits
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, over, over2, unwrap, wrap)
 import Data.String (Pattern(..), split, trim)
 import Data.String.Utils (lines)
 import Data.Traversable (traverse)
-import Debug.Trace (trace)
 import Effect (Effect)
 import Effect.Console (log, logShow)
 import Node.Encoding (Encoding(..))
