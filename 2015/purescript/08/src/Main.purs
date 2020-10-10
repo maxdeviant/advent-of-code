@@ -1,7 +1,7 @@
 module Main where
 
 import Prelude
-import Data.Array (drop, dropEnd, foldl, snoc)
+import Data.Array (foldl, snoc)
 import Data.Either (Either(..))
 import Data.Foldable (sum)
 import Data.List (List(..))
@@ -21,23 +21,39 @@ data EscapeSequence
   | DoubleQuote
   | AsciiCharCode String
 
+derive instance eqEscapeSequence :: Eq EscapeSequence
+
+instance showEscapeSequence :: Show EscapeSequence where
+  show Backslash = "Backslash"
+  show DoubleQuote = "DoubleQuote"
+  show (AsciiCharCode hexCode) = "AsciiCharCode(" <> hexCode <> ")"
+
 data SubstringOrEscapeSequence
   = Substring String
   | EscapeSequence EscapeSequence
+
+derive instance eqSubstringOrEscapeSequence :: Eq SubstringOrEscapeSequence
+
+instance showSubstringOrEscapeSequence :: Show SubstringOrEscapeSequence where
+  show (Substring substring) = show substring
+  show (EscapeSequence escapeSequence) = show escapeSequence
 
 newtype SantaString
   = SantaString (List SubstringOrEscapeSequence)
 
 derive instance newtypeSantaString :: Newtype SantaString _
 
+derive instance eqSantaString :: Eq SantaString
+
+instance showSantaString :: Show SantaString where
+  show = show <<< unwrap
+
 mkSantaString :: String -> SantaString
 mkSantaString =
   mkSantaString' Nil []
     <<< List.fromFoldable
-    <<< trimQuotes
     <<< toCharArray
   where
-  trimQuotes = drop 1 <<< dropEnd 1
 
   mkSantaString' acc currentChars chars = case readEscapeSequence chars of
     Just { escapeSequence, chars: chars' } ->
