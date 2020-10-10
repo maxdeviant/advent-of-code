@@ -57,9 +57,13 @@ mkSantaString =
     <<< List.fromFoldable
     <<< toCharArray
   where
-  trimQuotes (Cons '"' tail) = tail
+  trimQuotes chars = case chars of
+    Cons '"' tail -> trimQuotes' tail
+    otherwise -> trimQuotes' otherwise
+    where
+    trimQuotes' (Cons '"' Nil) = Nil
 
-  trimQuotes otherwise = otherwise
+    trimQuotes' xs = xs
 
   mkSantaString' acc currentChars chars = case readEscapeSequence chars of
     Just { escapeSequence, chars: chars' } ->
