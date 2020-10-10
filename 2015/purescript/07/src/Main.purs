@@ -77,55 +77,56 @@ parseInstruction value = case map trim $ split (Pattern "->") value of
   [ "NOT", source, destination ] -> Right $ Not (parseSource source) $ wrap destination
   _ -> Left $ "Failed to parse " <> show value <> " as an instruction."
 
-type Circuit = Map Wire Signal
+type Circuit
+  = Map Wire Signal
 
 runInstruction :: Instruction -> Circuit -> Circuit
-runInstruction instruction circuit =
-  case instruction of
-    Input source destination ->
-      let
-        signal = getSignal source
-      in
-        circuit # Map.insert destination signal
-    And sourceA sourceB destination ->
-      let
-        signalA = getSignal sourceA
-        signalB = getSignal sourceB
-      in
-        circuit # Map.insert destination (and signalA signalB)
-    Or sourceA sourceB destination ->
-      let
-        signalA = getSignal sourceA
-        signalB = getSignal sourceB
-      in
-        circuit # Map.insert destination (or signalA signalB)
-    LeftShift source n destination ->
-      let
-        signal = getSignal source
-      in
-        circuit # Map.insert destination (lshift signal n)
-    RightShift source n destination ->
-      let
-        signal = getSignal source
-      in
-        circuit # Map.insert destination (rshift signal n)
-    Not source destination ->
-      let
-        signal = getSignal source
-      in
-        circuit # Map.insert destination (complement signal)
+runInstruction instruction circuit = case instruction of
+  Input source destination ->
+    let
+      signal = getSignal source
+    in
+      circuit # Map.insert destination signal
+  And sourceA sourceB destination ->
+    let
+      signalA = getSignal sourceA
+
+      signalB = getSignal sourceB
+    in
+      circuit # Map.insert destination (and signalA signalB)
+  Or sourceA sourceB destination ->
+    let
+      signalA = getSignal sourceA
+
+      signalB = getSignal sourceB
+    in
+      circuit # Map.insert destination (or signalA signalB)
+  LeftShift source n destination ->
+    let
+      signal = getSignal source
+    in
+      circuit # Map.insert destination (lshift signal n)
+  RightShift source n destination ->
+    let
+      signal = getSignal source
+    in
+      circuit # Map.insert destination (rshift signal n)
+  Not source destination ->
+    let
+      signal = getSignal source
+    in
+      circuit # Map.insert destination (complement signal)
   where
-    getSignal (WireSource wire) = maybe (wrap 0) identity $ circuit # Map.lookup wire
-    getSignal (SignalSource signal) = signal
+  getSignal (WireSource wire) = maybe (wrap 0) identity $ circuit # Map.lookup wire
+
+  getSignal (SignalSource signal) = signal
 
 runCircuit :: Array Instruction -> Circuit
 runCircuit = runCircuit' Map.empty
   where
-    runCircuit' circuit instructions =
-      case uncons instructions of
-        Just { head: instruction, tail: rest } ->
-          runCircuit' (runInstruction instruction circuit) rest
-        Nothing -> circuit
+  runCircuit' circuit instructions = case uncons instructions of
+    Just { head: instruction, tail: rest } -> runCircuit' (runInstruction instruction circuit) rest
+    Nothing -> circuit
 
 partOne :: String -> Either String Int
 partOne input = do
@@ -133,7 +134,8 @@ partOne input = do
     input
       # lines
       # traverse parseInstruction
-  let wire = Wire "a"
+  let
+    wire = Wire "a"
   runCircuit instructions
     # Map.lookup wire
     # note ("Failed to get value for wire " <> (show $ unwrap wire))
