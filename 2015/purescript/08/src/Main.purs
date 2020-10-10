@@ -19,7 +19,7 @@ import Node.FS.Sync (readTextFile)
 data EscapeSequence
   = Backslash
   | DoubleQuote
-  | AsciiCharCode
+  | AsciiCharCode String
 
 data SubstringOrEscapeSequence
   = Substring String
@@ -66,7 +66,7 @@ mkSantaString =
       '\\' -> case tail of
         Cons '\\' tail' -> Just { escapeSequence: Backslash, chars: tail' }
         Cons '"' tail' -> Just { escapeSequence: DoubleQuote, chars: tail' }
-        Cons 'x' (Cons a (Cons b tail')) -> Just { escapeSequence: AsciiCharCode, chars: tail' }
+        Cons 'x' (Cons a (Cons b tail')) -> Just { escapeSequence: AsciiCharCode $ fromCharArray [ a, b ], chars: tail' }
         _ -> Nothing
       _ -> Nothing
     _ -> Nothing
@@ -85,7 +85,7 @@ countCharacters =
             charsInEscapeSequence = case escapeSequence of
               Backslash -> 2
               DoubleQuote -> 2
-              AsciiCharCode -> 4
+              AsciiCharCode _ -> 4
           in
             counts + { code: charsInEscapeSequence, inMemory: 1 }
     )
