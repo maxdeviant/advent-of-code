@@ -1,14 +1,15 @@
 module Main where
 
 import Prelude
-import Data.Array (drop, dropEnd)
+import Data.Array (drop, dropEnd, foldl, snoc)
 import Data.Either (Either(..))
 import Data.Foldable (sum)
 import Data.List (List(..))
 import Data.List as List
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype, unwrap, wrap)
-import Data.String.CodeUnits (toCharArray)
+import Data.Newtype (class Newtype, unwrap)
+import Data.String as String
+import Data.String.CodeUnits (fromCharArray, toCharArray)
 import Data.String.Utils (lines)
 import Effect (Effect)
 import Effect.Console (log, logShow)
@@ -20,33 +21,45 @@ data EscapeSequence
   | DoubleQuote
   | AsciiCharCode
 
+data SubstringOrEscapeSequence
+  = Substring String
+  | EscapeSequence EscapeSequence
+
 newtype SantaString
-  = SantaString String
+  = SantaString (List SubstringOrEscapeSequence)
 
 derive instance newtypeSantaString :: Newtype SantaString _
 
-countCharacters :: SantaString -> { code :: Int, inMemory :: Int }
-countCharacters =
-  countCharacters' { code: 2, inMemory: 0 }
+mkSantaString :: String -> SantaString
+mkSantaString =
+  mkSantaString' Nil []
     <<< List.fromFoldable
     <<< trimQuotes
     <<< toCharArray
-    <<< unwrap
   where
   trimQuotes = drop 1 <<< dropEnd 1
 
-  countCharacters' counts chars = case readEscapeSequence chars of
+  mkSantaString' acc currentChars chars = case readEscapeSequence chars of
     Just { escapeSequence, chars: chars' } ->
       let
-        charsInEscapeSequence = case escapeSequence of
-          Backslash -> 2
-          DoubleQuote -> 2
-          AsciiCharCode -> 4
+        acc' = case mkSubstring currentChars of
+          Just substring -> Cons substring acc
+          Nothing -> acc
       in
-        countCharacters' (counts + { code: charsInEscapeSequence, inMemory: 1 }) chars'
+        mkSantaString' (Cons (EscapeSequence escapeSequence) acc') [] chars'
     Nothing -> case chars of
-      Cons _ tail -> countCharacters' (counts + { code: 1, inMemory: 1 }) tail
-      Nil -> counts
+      Cons char tail -> mkSantaString' acc (snoc currentChars char) tail
+      Nil ->
+        let
+          acc' = case mkSubstring currentChars of
+            Just substring -> Cons substring acc
+            Nothing -> acc
+        in
+          SantaString $ List.reverse acc'
+
+  mkSubstring = case _ of
+    [] -> Nothing
+    chars -> Just $ Substring $ fromCharArray chars
 
   readEscapeSequence chars = case chars of
     Cons head tail -> case head of
@@ -58,12 +71,33 @@ countCharacters =
       _ -> Nothing
     _ -> Nothing
 
+countCharacters :: SantaString -> { code :: Int, inMemory :: Int }
+countCharacters =
+  foldl
+    ( \counts x -> case x of
+        Substring substring ->
+          let
+            charCount = String.length substring
+          in
+            counts + { code: charCount, inMemory: charCount }
+        EscapeSequence escapeSequence ->
+          let
+            charsInEscapeSequence = case escapeSequence of
+              Backslash -> 2
+              DoubleQuote -> 2
+              AsciiCharCode -> 4
+          in
+            counts + { code: charsInEscapeSequence, inMemory: 1 }
+    )
+    { code: String.length "\"\"", inMemory: 0 }
+    <<< unwrap
+
 partOne :: String -> Either String Int
 partOne input =
   pure
     $ input
     # lines
-    # map wrap
+    # map mkSantaString
     # map countCharacters
     # map (\{ code, inMemory } -> code - inMemory)
     # sum
