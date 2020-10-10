@@ -132,8 +132,33 @@ partOne input = do
     # note ("Failed to get value for wire " <> (show $ unwrap wire))
     # map unwrap
 
+overrideSignal :: Wire -> Signal -> Array Instruction -> Array Instruction
+overrideSignal wire signal =
+  map
+    ( case _ of
+        Input source destination
+          | destination == wire -> Input (SignalSource signal) wire
+        instruction -> instruction
+    )
+
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  instructions <-
+    input
+      # lines
+      # traverse parseInstruction
+  let
+    wireA = Wire "a"
+  wireASignal <-
+    runCircuit instructions
+      # Map.lookup wireA
+      # note ("Failed to get value for wire " <> (show $ unwrap wireA))
+  let
+    overrideWireB = overrideSignal (Wire "b") wireASignal
+  runCircuit (overrideWireB instructions)
+    # Map.lookup wireA
+    # note ("Failed to get value for wire " <> (show $ unwrap wireA))
+    # map unwrap
 
 main :: Effect Unit
 main = do
