@@ -131,8 +131,43 @@ partOne input =
     # map (\{ code, inMemory } -> code - inMemory)
     # sum
 
+encode :: SantaString -> SantaString
+encode =
+  SantaString
+    <<< (Cons Quote >>> flip List.snoc Quote)
+    <<< List.concatMap
+        ( case _ of
+            Quote -> List.singleton $ EscapeSequence DoubleQuote
+            Substring substring -> List.singleton $ Substring substring
+            self@(EscapeSequence escapeSequence) -> case escapeSequence of
+              Backslash -> Cons self $ Cons self Nil
+              DoubleQuote -> Cons (EscapeSequence Backslash) $ Cons self Nil
+              AsciiCharCode _ -> Cons (Substring "\\") $ Cons self Nil
+        )
+    <<< unwrap
+
+countEncodedCharacters :: String -> Int
+countEncodedCharacters =
+  mkSantaString
+    >>> encode
+    >>> countCharacters
+    >>> _.code
+
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input =
+  pure
+    $ input
+    # lines
+    # map
+        ( \line ->
+            let
+              encodedCharacterCount = countEncodedCharacters line
+
+              originalCharacterCount = _.code $ countCharacters $ mkSantaString line
+            in
+              encodedCharacterCount - originalCharacterCount
+        )
+    # sum
 
 main :: Effect Unit
 main = do
