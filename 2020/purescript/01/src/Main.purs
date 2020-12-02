@@ -31,17 +31,17 @@ partOne input = do
     # head
     # (note $ "No entries found that sum to " <> show sumToFind)
 
-data Triplet a
-  = Triplet a a a
+data Triple a
+  = Triple a a a
 
 partTwo :: String -> Either String Int
 partTwo input = do
   let
     sumToFind = 2020
   expenseReport <- parseExpenseReport input
-  [ Triplet ] <*> expenseReport <*> expenseReport <*> expenseReport
-    # filter (\(Triplet x y z) -> x + y + z == sumToFind)
-    # map (\(Triplet x y z) -> x * y * z)
+  [ Triple ] <*> expenseReport <*> expenseReport <*> expenseReport
+    # filter (\(Triple x y z) -> x + y + z == sumToFind)
+    # map (\(Triple x y z) -> x * y * z)
     # head
     # (note $ "No entries found that sum to " <> show sumToFind)
 
