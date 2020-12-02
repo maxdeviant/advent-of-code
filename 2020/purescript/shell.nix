@@ -17,6 +17,7 @@ stdenv.mkDerivation {
     easy-ps.purs
     easy-ps.spago
     easy-ps.purty
+    nodejs
     yarn
   ];
 }
