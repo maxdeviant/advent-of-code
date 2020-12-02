@@ -6,9 +6,10 @@ import Data.Either (Either(..), note)
 import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split, trim)
-import Data.String.CodeUnits (toChar, toCharArray)
+import Data.String.CodeUnits (charAt, toChar, toCharArray)
 import Data.String.Utils (lines)
 import Data.Traversable (traverse)
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Console (log, logShow)
 import Node.Encoding (Encoding(..))
@@ -17,28 +18,43 @@ import Node.FS.Sync (readTextFile)
 type Password
   = String
 
-type PasswordPolicy
+type SledRentalPasswordPolicy
   = { letter :: Char
-    , atLeast :: Int
-    , atMost :: Int
+    , x :: Int
+    , y :: Int
     }
 
-parseEntry :: String -> Either String { policy :: PasswordPolicy, password :: Password }
-parseEntry entry = case split (Pattern ":") entry of
+mkSledRentalPasswordPolicy :: Char -> Int -> Int -> SledRentalPasswordPolicy
+mkSledRentalPasswordPolicy letter x y = { letter, x, y }
+
+type OfficialTobogganCorporatePolicy
+  = { letter :: Char
+    , firstPosition :: Int
+    , secondPosition :: Int
+    }
+
+mkOfficialTobogganCorporatePolicy :: Char -> Int -> Int -> OfficialTobogganCorporatePolicy
+mkOfficialTobogganCorporatePolicy letter firstPosition secondPosition = { letter, firstPosition, secondPosition }
+
+type MakePasswordPolicy policy
+  = Char -> Int -> Int -> policy
+
+parseEntry :: forall policy. MakePasswordPolicy policy -> String -> Either String { policy :: policy, password :: Password }
+parseEntry mkPolicy entry = case split (Pattern ":") entry of
   [ policy, password ] -> case split (Pattern " ") policy of
     [ occurrences, letter' ] -> do
       letter <- toChar letter' # note ("Failed to parse letter: " <> letter')
       case split (Pattern "-") occurrences of
-        [ atLeast', atMost' ] -> do
-          atLeast <- Int.fromString atLeast' # note ("Failed to parse \"at least\" constraint: " <> atLeast')
-          atMost <- Int.fromString atMost' # note ("Failed to parse \"at most\" constraint: " <> atMost')
-          pure { policy: { letter: letter, atLeast, atMost }, password: trim password }
+        [ x', y' ] -> do
+          x <- Int.fromString x' # note ("Failed to parse first number: " <> x')
+          y <- Int.fromString y' # note ("Failed to parse second number: " <> y')
+          pure { policy: mkPolicy letter x y, password: trim password }
         _ -> Left $ "Invalid entry: " <> entry
     _ -> Left $ "Invalid entry: " <> entry
   _ -> Left $ "Invalid entry: " <> entry
 
-isPasswordValid :: PasswordPolicy -> Password -> Boolean
-isPasswordValid policy password = policy.atLeast <= occurrences && occurrences <= policy.atMost
+isSledRentalPasswordValid :: SledRentalPasswordPolicy -> Password -> Boolean
+isSledRentalPasswordValid policy password = policy.x <= occurrences && occurrences <= policy.y
   where
   occurrences = countOccurrences policy.letter 0 (toCharArray password)
 
@@ -48,14 +64,30 @@ isPasswordValid policy password = policy.atLeast <= occurrences && occurrences <
 
 partOne :: String -> Either String Int
 partOne input = do
-  passwords <- input # lines # traverse parseEntry
+  passwords <- input # lines # traverse (parseEntry mkSledRentalPasswordPolicy)
   pure
     $ passwords
-    # filter (\{ policy, password } -> isPasswordValid policy password)
+    # filter (\{ policy, password } -> isSledRentalPasswordValid policy password)
     # length
 
+isOfficialTobogganCorporatePasswordValid :: OfficialTobogganCorporatePolicy -> Password -> Boolean
+isOfficialTobogganCorporatePasswordValid policy password = case Tuple hasLetterInFirstPosition hasLetterInSecondPosition of
+  Tuple true false -> true
+  Tuple false true -> true
+  Tuple true true -> false
+  Tuple false false -> false
+  where
+  hasLetterInFirstPosition = charAt (policy.firstPosition - 1) password == Just policy.letter
+
+  hasLetterInSecondPosition = charAt (policy.secondPosition - 1) password == Just policy.letter
+
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  passwords <- input # lines # traverse (parseEntry mkOfficialTobogganCorporatePolicy)
+  pure
+    $ passwords
+    # filter (\{ policy, password } -> isOfficialTobogganCorporatePasswordValid policy password)
+    # length
 
 main :: Effect Unit
 main = do
