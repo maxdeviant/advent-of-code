@@ -7,7 +7,7 @@ import Data.Maybe (Maybe)
 import Data.String as String
 import Data.String.CodeUnits (toCharArray)
 import Data.String.Utils (lines)
-import Data.Traversable (traverse)
+import Data.Traversable (product, traverse)
 import Effect (Effect)
 import Effect.Console (log, logShow)
 import Node.Encoding (Encoding(..))
@@ -64,14 +64,30 @@ traverseMap theMap@(Map { height }) { right, down } = traverseMap' { x: 0, y: 0 
       square <- getSquare theMap x y # note ("No square found at (" <> show x <> ", " <> show y <> ")")
       traverseMap' (position + { x: right, y: down }) (square : squares)
 
+encounteredTreesCount :: Array Square -> Int
+encounteredTreesCount = length <<< filter ((==) Tree)
+
 partOne :: String -> Either String Int
 partOne input = do
   theMap <- mkMap input
   traversedSquares <- traverseMap theMap { right: 3, down: 1 }
-  pure $ traversedSquares # filter ((==) Tree) # length
+  pure $ encounteredTreesCount traversedSquares
 
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  theMap <- mkMap input
+  let
+    slopes =
+      [ { right: 1, down: 1 }
+      , { right: 3, down: 1 }
+      , { right: 5, down: 1 }
+      , { right: 7, down: 1 }
+      , { right: 1, down: 2 }
+      ]
+  slopes
+    # traverse (traverseMap theMap)
+    # map (map encounteredTreesCount)
+    # map product
 
 main :: Effect Unit
 main = do
