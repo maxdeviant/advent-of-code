@@ -8,3 +8,4 @@
 | [sophiebits/adventofcode](https://github.com/sophiebits/adventofcode/tree/master/2020) | Python   |
 | [thatlegoguy/AoC2020](https://github.com/thatlegoguy/AoC2020)                          | Excel    |
 | [yoshuawuyts/aoc](https://github.com/yoshuawuyts/aoc)                                  | Rust     |
+| [jthodge/advent-of-code](https://github.com/jthodge/advent-of-code/tree/main/2020)     | Racket   |
