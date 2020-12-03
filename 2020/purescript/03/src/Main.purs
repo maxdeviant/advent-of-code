@@ -49,7 +49,7 @@ mkMap mapData = do
     invalidChar -> Left $ "Invalid map data: " <> show invalidChar
 
 getSquare :: Map -> Int -> Int -> Maybe Square
-getSquare (Map map) x y = map.squares !! (y * map.width + mod x map.width)
+getSquare (Map theMap) x y = theMap.squares !! (y * theMap.width + mod x theMap.width)
 
 type Slope
   = { right :: Int, down :: Int }
