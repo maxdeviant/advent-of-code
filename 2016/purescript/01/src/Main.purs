@@ -1,10 +1,11 @@
 module Main where
 
 import Prelude
-import Data.Array (uncons)
+import Data.Array (concat, filter, uncons, (..))
 import Data.Either (Either(..), note)
 import Data.Int as Int
-import Data.Maybe (Maybe(..))
+import Data.Map as Map
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Ord (abs)
 import Data.String (Pattern(..), split, splitAt)
 import Data.Traversable (traverse)
@@ -59,22 +60,30 @@ parseInstruction input = case splitAt 1 input of
     blocks <- blocks' # Int.fromString # note ("Failed to parse blocks: " <> blocks')
     pure $ { turn, blocks }
 
+type Location
+  = { facing :: Direction, coordinates :: Point }
+
+followInstruction :: Location -> Instruction -> Location
+followInstruction { facing, coordinates } { turn, blocks } = { facing: facing', coordinates: coordinates + move }
+  where
+  facing' = doTurn turn facing
+
+  move = case facing' of
+    North -> { x: 0, y: blocks }
+    South -> { x: 0, y: -blocks }
+    East -> { x: blocks, y: 0 }
+    West -> { x: -blocks, y: 0 }
+
 followInstructions :: Array Instruction -> Point -> Point
 followInstructions = followInstructions' North
   where
-  followInstructions' facing instructions position = case uncons instructions of
-    Just { head: { turn, blocks }, tail } ->
+  followInstructions' facing instructions coordinates = case uncons instructions of
+    Just { head: instruction, tail } ->
       let
-        facing' = doTurn turn facing
-
-        move = case facing' of
-          North -> { x: 0, y: blocks }
-          South -> { x: 0, y: -blocks }
-          East -> { x: blocks, y: 0 }
-          West -> { x: -blocks, y: 0 }
+        newLocation = followInstruction { facing, coordinates } instruction
       in
-        followInstructions' facing' tail $ position + move
-    Nothing -> position
+        followInstructions' newLocation.facing tail newLocation.coordinates
+    Nothing -> coordinates
 
 partOne :: String -> Either String Int
 partOne input = do
@@ -86,8 +95,64 @@ partOne input = do
     startingPoint = { x: 0, y: 0 }
   pure $ manhattanDistance startingPoint $ followInstructions instructions startingPoint
 
+intermediateLocations :: Point -> Point -> Array Point
+intermediateLocations { x: x1, y: y1 } { x: x2, y: y2 } =
+  concat
+    [ if deltaX > 0 then (map { x: _, y: 0 } $ 0 .. deltaX) else []
+    , if deltaY > 0 then (map { x: 0, y: _ } $ 0 .. deltaY) else []
+    ]
+    # filter ((/=) { x: 0, y: 0 })
+  where
+  deltaX = abs $ x1 - x2
+
+  deltaY = abs $ y1 - y2
+
+firstLocationVisitedNTimes :: Int -> Array Instruction -> Point -> Maybe Point
+firstLocationVisitedNTimes times instructions' coordinates =
+  firstLocationVisitedNTimes'
+    Map.empty
+    instructions'
+    { facing: North, coordinates }
+  where
+  visitLocations acc locations = case uncons locations of
+    Just { head: location, tail } ->
+      let
+        acc' = acc # Map.insertWith (+) location 1
+
+        timesVisited = acc' # Map.lookup location # fromMaybe 0
+      in
+        if timesVisited == times then
+          Right location
+        else
+          visitLocations acc' tail
+    Nothing -> Left acc
+
+  firstLocationVisitedNTimes' acc instructions location = case uncons instructions of
+    Just { head: instruction, tail } ->
+      let
+        newLocation = followInstruction location instruction
+
+        intermediateLocations' =
+          intermediateLocations location.coordinates newLocation.coordinates
+            # map ((+) location.coordinates)
+      in
+        case visitLocations acc intermediateLocations' of
+          Right found -> Just found
+          Left acc' -> firstLocationVisitedNTimes' acc' tail newLocation
+    Nothing -> Nothing
+
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  instructions <-
+    input
+      # split (Pattern ", ")
+      # traverse parseInstruction
+  let
+    startingPoint = { x: 0, y: 0 }
+  firstLocationVisitedTwice <-
+    firstLocationVisitedNTimes 2 instructions startingPoint
+      # note "No location was visited twice."
+  pure $ manhattanDistance startingPoint firstLocationVisitedTwice
 
 main :: Effect Unit
 main = do
