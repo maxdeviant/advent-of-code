@@ -5,6 +5,7 @@ import Data.Array (last, slice, sort, uncons, (..))
 import Data.Array as Array
 import Data.Either (Either(..), note)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype, unwrap)
 import Data.String.CodeUnits (splitAt, toCharArray)
 import Data.String.Utils (lines)
 import Data.Traversable (traverse)
@@ -81,8 +82,17 @@ findSeat (BoardingPass boardingPass) = do
   column <- partition (0 .. 7) boardingPass.column # note "Column not found."
   pure { row, column }
 
-seatId :: Seat -> Int
-seatId { row, column } = row * 8 + column
+newtype SeatId
+  = SeatId Int
+
+derive instance newtypeSeatId :: Newtype SeatId _
+
+derive instance eqSeatId :: Eq SeatId
+
+derive instance ordSeatId :: Ord SeatId
+
+seatId :: Seat -> SeatId
+seatId { row, column } = SeatId $ row * 8 + column
 
 partOne :: String -> Either String Int
 partOne input = do
@@ -94,10 +104,34 @@ partOne input = do
     # map seatId
     # sort
     # last
+    # map unwrap
     # note ("No highest seat ID found.")
 
+findMySeat :: Array SeatId -> Either String SeatId
+findMySeat seats = do
+  let
+    sortedSeats = sort seats
+  firstSeat <- Array.head sortedSeats # map unwrap # note "First seat not found."
+  lastSeat <- Array.last sortedSeats # map unwrap # note "Last seat not found."
+  let
+    allSeats = firstSeat .. lastSeat # map SeatId
+  let
+    missingSeats = Array.difference allSeats seats
+  case missingSeats of
+    [ mySeat ] -> pure mySeat
+    [] -> Left "No missing seats."
+    _ -> Left $ "More than one missing seat: " <> show (map unwrap missingSeats)
+
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  seats <-
+    input
+      # lines
+      # traverse (parseBoardingPass >=> findSeat)
+  seats
+    # map seatId
+    # findMySeat
+    # map unwrap
 
 main :: Effect Unit
 main = do
