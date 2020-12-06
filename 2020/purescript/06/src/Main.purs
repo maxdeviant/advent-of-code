@@ -52,8 +52,22 @@ partOne =
     >>> sum
     >>> pure
 
+groupAnswers' :: Group -> Answers
+groupAnswers' group = case uncons group of
+  Just { head, tail } -> anyYeses head.answers tail
+  Nothing -> Set.empty
+  where
+  anyYeses acc members = case uncons members of
+    Just { head: { answers }, tail } -> anyYeses (Set.intersection acc answers) tail
+    Nothing -> acc
+
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo =
+  parseGroups
+    >>> map groupAnswers'
+    >>> map Set.size
+    >>> sum
+    >>> pure
 
 main :: Effect Unit
 main = do
