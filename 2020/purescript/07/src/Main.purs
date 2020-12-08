@@ -1,10 +1,13 @@
 module Main where
 
 import Prelude
-import Data.Array (uncons)
+import Data.Array (any, concatMap, fold, foldl, partition, uncons, (:))
+import Data.Array as Array
 import Data.Either (Either(..), note)
 import Data.Int as Int
 import Data.Maybe (Maybe(..))
+import Data.Set (Set)
+import Data.Set as Set
 import Data.String (Pattern(..), Replacement(..), joinWith, replaceAll, split, trim)
 import Data.String.Utils (lines)
 import Data.Traversable (traverse)
@@ -17,6 +20,10 @@ import Node.FS.Sync (readTextFile)
 newtype BagColor
   = BagColor String
 
+derive instance eqBagColor :: Eq BagColor
+
+derive instance ordBagColor :: Ord BagColor
+
 type BagContents
   = { quantity :: Int, bag :: Bag }
 
@@ -25,6 +32,31 @@ newtype Bag
   { color :: BagColor
   , contains :: Array BagContents
   }
+
+derive instance eqBag :: Eq Bag
+
+bagColor :: Bag -> BagColor
+bagColor (Bag bag) = bag.color
+
+placeInside :: Bag -> Bag -> Maybe Bag
+placeInside innerBag@(Bag inner) (Bag outer) =
+  let
+    mergeContains (Bag x) (Bag y) = Bag $ x { contains = Array.concat [ x.contains, y.contains ] }
+
+    updatedContains =
+      outer.contains
+        # map
+            ( \contained ->
+                if bagColor contained.bag == bagColor innerBag then
+                  contained
+                else
+                  contained
+            )
+  in
+    if updatedContains == outer.contains then
+      Nothing
+    else
+      Just $ Bag (outer { contains = updatedContains })
 
 parseBag :: String -> Either String Bag
 parseBag rule = case rule # split (Pattern "contain") # map stripFluff # map trim of
@@ -58,11 +90,90 @@ parseBag rule = case rule # split (Pattern "contain") # map stripFluff # map tri
       # map trim
       # traverse parseRule
 
+untilJust :: forall a. (a -> Maybe a) -> Array a -> Maybe (Array a)
+untilJust f arr = case uncons arr of
+  Just { head: x, tail: xs } -> case f x of
+    Just g -> Just $ g : xs
+    Nothing -> case untilJust f xs of
+      Just gs -> Just $ x : gs
+      Nothing -> Nothing
+  Nothing -> Nothing
+
+insertBag :: Bag -> Bag -> Maybe Bag
+insertBag candidate (Bag bag) = case placeInside candidate (Bag bag) of
+  Just updatedBag -> Just updatedBag
+  Nothing -> case untilJust
+      ( \contained ->
+          insertBag candidate contained.bag
+            # map (\updated -> contained { bag = updated })
+      )
+      bag.contains of
+    Just updatedContains -> Just $ Bag $ bag { contains = updatedContains }
+    Nothing -> Nothing
+
+-- insertBag :: Bag -> Bag -> Maybe Bag
+-- insertBag (Bag candidate) (Bag bag) =
+--   let
+--     updatedBag =
+--       bag.contains
+--         # Array.find (\{ bag: (Bag containingBag) } -> containingBag.color == candidate.color)
+--         # map (\{ bag: (Bag containingBag) } -> containingBag { contains = Array.concat [ containingBag.contains, candidate.contains ] })
+--   in
+--     case updatedBag of
+--       Just updated ->
+--         Just
+--           ( Bag
+--               bag
+--                 { contains =
+--                   bag.contains
+--                     # fold
+--                         identity
+--                 }
+--           )
+--       Nothing -> case untilJust (insertBag (Bag candidate)) $ bag.contains # map _.bag of
+--         Just updated -> Just $ (Bag bag { contains = updated })
+--         Nothing -> Nothing
+-- if bag.contains # any (\{ bag: (Bag containedBag) } -> containedBag.color == candidate.color) then
+--   Just $ Bag bag { contains = (Bag candidate) : bag.contains }
+-- else
+--   untilJust (insertBag (Bag candidate))
+allBagColors :: Array Bag -> Set BagColor
+allBagColors = map bagColor >>> Set.fromFoldable
+
+outermostBagColors :: Array Bag -> Set BagColor
+outermostBagColors bags =
+  bags
+    # concatMap
+        ( \(Bag { contains }) ->
+            contains # map (_.bag >>> bagColor)
+        )
+    # foldl (flip Set.delete) (allBagColors bags)
+
+--   findOutermostBags' $ allBagColors bags $ bags
+-- where
+-- findOutermostBags' uncontainedBags bags =
+--   findOutermostBags' ( Set.delete )
+sortBags :: Array Bag -> Array Bag
+sortBags bags = sortBags' outermostBags.yes outermostBags.no
+  where
+  outermostBags =
+    let
+      outermost = outermostBagColors bags
+    in
+      partition (\bag -> outermost # Set.member (bagColor bag)) bags
+
+  sortBags' acc unsortedBags = case uncons $ Debug.trace unsortedBags \_ -> unsortedBags of
+    Just { head, tail } -> case untilJust (insertBag head) acc of
+      Just acc' -> sortBags' acc' tail
+      Nothing -> sortBags' acc (Array.concat [ tail, [ head ] ])
+    Nothing -> acc
+
 partOne :: String -> Either String Int
 partOne input =
   input
     # lines
     # traverse parseBag
+    # map sortBags
     # \bag ->
         Debug.trace bag \_ ->
           bag
