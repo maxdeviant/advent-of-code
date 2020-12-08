@@ -7,6 +7,7 @@
   , "node-fs"
   , "ordered-collections"
   , "psci-support"
+  , "spec"
   , "stringutils"
   , "tailrec"
   ]

@@ -24,6 +24,9 @@ derive instance eqBagColor :: Eq BagColor
 
 derive instance ordBagColor :: Ord BagColor
 
+instance showBagColor :: Show BagColor where
+  show (BagColor color) = color
+
 type BagContents
   = { quantity :: Int, bag :: Bag }
 
@@ -34,6 +37,9 @@ newtype Bag
   }
 
 derive instance eqBag :: Eq Bag
+
+instance showBag :: Show Bag where
+  show (Bag bag) = "Bag(" <> show bag <> ")"
 
 bagColor :: Bag -> BagColor
 bagColor (Bag bag) = bag.color
@@ -48,7 +54,7 @@ placeInside innerBag@(Bag inner) (Bag outer) =
         # map
             ( \contained ->
                 if bagColor contained.bag == bagColor innerBag then
-                  contained
+                  contained { bag = mergeContains contained.bag innerBag }
                 else
                   contained
             )
@@ -101,7 +107,7 @@ untilJust f arr = case uncons arr of
 
 insertBag :: Bag -> Bag -> Maybe Bag
 insertBag candidate (Bag bag) = case placeInside candidate (Bag bag) of
-  Just updatedBag -> Just updatedBag
+  Just updatedBag -> Just $ Debug.trace updatedBag \_ -> updatedBag
   Nothing -> case untilJust
       ( \contained ->
           insertBag candidate contained.bag
@@ -111,32 +117,6 @@ insertBag candidate (Bag bag) = case placeInside candidate (Bag bag) of
     Just updatedContains -> Just $ Bag $ bag { contains = updatedContains }
     Nothing -> Nothing
 
--- insertBag :: Bag -> Bag -> Maybe Bag
--- insertBag (Bag candidate) (Bag bag) =
---   let
---     updatedBag =
---       bag.contains
---         # Array.find (\{ bag: (Bag containingBag) } -> containingBag.color == candidate.color)
---         # map (\{ bag: (Bag containingBag) } -> containingBag { contains = Array.concat [ containingBag.contains, candidate.contains ] })
---   in
---     case updatedBag of
---       Just updated ->
---         Just
---           ( Bag
---               bag
---                 { contains =
---                   bag.contains
---                     # fold
---                         identity
---                 }
---           )
---       Nothing -> case untilJust (insertBag (Bag candidate)) $ bag.contains # map _.bag of
---         Just updated -> Just $ (Bag bag { contains = updated })
---         Nothing -> Nothing
--- if bag.contains # any (\{ bag: (Bag containedBag) } -> containedBag.color == candidate.color) then
---   Just $ Bag bag { contains = (Bag candidate) : bag.contains }
--- else
---   untilJust (insertBag (Bag candidate))
 allBagColors :: Array Bag -> Set BagColor
 allBagColors = map bagColor >>> Set.fromFoldable
 
@@ -149,10 +129,6 @@ outermostBagColors bags =
         )
     # foldl (flip Set.delete) (allBagColors bags)
 
---   findOutermostBags' $ allBagColors bags $ bags
--- where
--- findOutermostBags' uncontainedBags bags =
---   findOutermostBags' ( Set.delete )
 sortBags :: Array Bag -> Array Bag
 sortBags bags = sortBags' outermostBags.yes outermostBags.no
   where
@@ -162,9 +138,9 @@ sortBags bags = sortBags' outermostBags.yes outermostBags.no
     in
       partition (\bag -> outermost # Set.member (bagColor bag)) bags
 
-  sortBags' acc unsortedBags = case uncons $ Debug.trace unsortedBags \_ -> unsortedBags of
+  sortBags' acc unsortedBags = case uncons unsortedBags of
     Just { head, tail } -> case untilJust (insertBag head) acc of
-      Just acc' -> sortBags' acc' tail
+      Just acc' -> sortBags' acc' $ Debug.trace (show "Inserted one!") \_ -> tail
       Nothing -> sortBags' acc (Array.concat [ tail, [ head ] ])
     Nothing -> acc
 
