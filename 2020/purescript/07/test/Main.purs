@@ -20,7 +20,7 @@ main = do
   launchAff_
     $ runSpec [ consoleReporter ] do
         describe "Day 7" do
-          describe "placeInside" do
+          describe "insertBag" do
             it "places a bag inside another" do
               let
                 innerBag =
@@ -44,4 +44,41 @@ main = do
                         { color: BagColor "red"
                         , contains: [ { quantity: 4, bag: innerBag } ]
                         }
-              placeInside innerBag outerBag `shouldEqual` expected
+              insertBag innerBag outerBag `shouldEqual` expected
+          it "places a bag inside another two levels deep" do
+            let
+              innerInnerBag = Bag { color: BagColor "green", contains: [ { quantity: 7, bag: leafBag "purple" } ] }
+            let
+              innerBag =
+                Bag
+                  { color: BagColor "blue"
+                  , contains:
+                      [ { quantity: 1, bag: leafBag "green" }
+                      , { quantity: 2, bag: leafBag "yellow" }
+                      ]
+                  }
+            let
+              outerBag =
+                Bag
+                  { color: BagColor "red"
+                  , contains: [ { quantity: 4, bag: innerBag } ]
+                  }
+            let
+              expected =
+                Just
+                  $ Bag
+                      { color: BagColor "red"
+                      , contains:
+                          [ { quantity: 4
+                            , bag:
+                                Bag
+                                  { color: BagColor "blue"
+                                  , contains:
+                                      [ { quantity: 1, bag: innerInnerBag }
+                                      , { quantity: 2, bag: leafBag "yellow" }
+                                      ]
+                                  }
+                            }
+                          ]
+                      }
+            insertBag innerInnerBag outerBag `shouldEqual` expected

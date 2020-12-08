@@ -44,26 +44,6 @@ instance showBag :: Show Bag where
 bagColor :: Bag -> BagColor
 bagColor (Bag bag) = bag.color
 
-placeInside :: Bag -> Bag -> Maybe Bag
-placeInside innerBag@(Bag inner) (Bag outer) =
-  let
-    mergeContains (Bag x) (Bag y) = Bag $ x { contains = Array.concat [ x.contains, y.contains ] }
-
-    updatedContains =
-      outer.contains
-        # map
-            ( \contained ->
-                if bagColor contained.bag == bagColor innerBag then
-                  contained { bag = mergeContains contained.bag innerBag }
-                else
-                  contained
-            )
-  in
-    if updatedContains == outer.contains then
-      Nothing
-    else
-      Just $ Bag (outer { contains = updatedContains })
-
 parseBag :: String -> Either String Bag
 parseBag rule = case rule # split (Pattern "contain") # map stripFluff # map trim of
   [ colorText, ruleText ] -> do
@@ -116,6 +96,25 @@ insertBag candidate (Bag bag) = case placeInside candidate (Bag bag) of
       bag.contains of
     Just updatedContains -> Just $ Bag $ bag { contains = updatedContains }
     Nothing -> Nothing
+  where
+  placeInside innerBag@(Bag inner) (Bag outer) =
+    let
+      mergeContains (Bag x) (Bag y) = Bag $ x { contains = Array.concat [ x.contains, y.contains ] }
+
+      updatedContains =
+        outer.contains
+          # map
+              ( \contained ->
+                  if bagColor contained.bag == bagColor innerBag then
+                    contained { bag = mergeContains contained.bag innerBag }
+                  else
+                    contained
+              )
+    in
+      if updatedContains == outer.contains then
+        Nothing
+      else
+        Just $ Bag (outer { contains = updatedContains })
 
 allBagColors :: Array Bag -> Set BagColor
 allBagColors = map bagColor >>> Set.fromFoldable
