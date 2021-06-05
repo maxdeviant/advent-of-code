@@ -13,5 +13,6 @@ stdenv.mkDerivation {
   buildInputs = [
     ghc
     haskellPackages.cabal-install
+    ormolu
   ];
 }

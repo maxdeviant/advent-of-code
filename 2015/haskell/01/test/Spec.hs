@@ -4,5 +4,5 @@ import Test.Hspec
 main :: IO ()
 main =
   hspec $ do
-    it "works" $ do
-      2 `shouldBe` 2
+    it "works with first sample input" $ do
+      partOne "(())" `shouldBe` Right 0

@@ -6,6 +6,10 @@ main :: IO ()
 main = do
   input <- readFile "input.txt"
   putStrLn "Part One"
-  print $ Day1.partOne input
+  case Day1.partOne input of
+    Right answer -> print answer
+    Left error -> print $ "Failed with: " ++ error
   putStrLn "Part Two"
-  print $ Day1.partTwo input
+  case Day1.partTwo input of
+    Right answer -> print answer
+    Left error -> print $ "Failed with: " ++ error
