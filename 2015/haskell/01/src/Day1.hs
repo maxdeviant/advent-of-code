@@ -1,5 +1,7 @@
 module Day1 (partOne, partTwo) where
 
+import Control.Monad ((>=>))
+
 data Direction = Up | Down deriving (Show)
 
 parseDirection :: Char -> Char -> Char -> Either String Direction
@@ -41,6 +43,4 @@ partOne input = do
   pure $ sum . map move $ instructions
 
 partTwo :: String -> Either String Int
-partTwo input = do
-  instructions <- parseInstructions input
-  positionOfFirstBasementDirection instructions
+partTwo = parseInstructions >=> positionOfFirstBasementDirection
