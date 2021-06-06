@@ -1,0 +1,33 @@
+cabal-version:      2.4
+name:               day02
+version:            0.1.0.0
+author:             Marshall Bowers
+maintainer:         elliott.codes@gmail.com
+
+library
+    exposed-modules:  Day2
+    build-depends:
+        base ^>=4.14.1.0,
+        split
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+executable day02
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.14.1.0,
+        day02
+
+    hs-source-dirs:   app
+    default-language: Haskell2010
+
+test-suite day02-tests
+    type: exitcode-stdio-1.0
+    main-is: test/Spec.hs
+
+    build-depends:
+          base
+        , day02
+        , hspec
+
+    default-language: Haskell2010
