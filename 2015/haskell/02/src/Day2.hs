@@ -1,7 +1,6 @@
 module Day2 (partOne, partTwo) where
 
 import Control.Arrow ((&&&))
-import Control.Monad ((<=<))
 import Data.List.Split
 import Text.Read (readMaybe)
 
