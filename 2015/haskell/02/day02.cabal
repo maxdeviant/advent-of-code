@@ -7,7 +7,7 @@ maintainer:         elliott.codes@gmail.com
 common shared-properties
     default-language: Haskell2010
     ghc-options:
-        -Wall
+        -Weverything
         -Wno-name-shadowing
 
 library
