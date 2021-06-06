@@ -33,6 +33,11 @@ surfaceArea present = 2 * l * w + 2 * w * h + 2 * h * l
   where
     (l, w, h) = dimensions present
 
+volume :: Present -> Int
+volume present = l * w * h
+  where
+    (l, w, h) = dimensions present
+
 areaOfSmallestSide :: Present -> Int
 areaOfSmallestSide present = minimum [l * w, w * h, h * l]
   where
@@ -59,5 +64,18 @@ partOne =
     . traverse parsePresent
     . lines
 
+perimeterOfSmallestSide :: Present -> Int
+perimeterOfSmallestSide present = minimum [perimeter l w, perimeter w h, perimeter h l]
+  where
+    perimeter l w = 2 * (l + w)
+
+    (l, w, h) = dimensions present
+
+ribbonNeeded :: Present -> Int
+ribbonNeeded = sumPair . (perimeterOfSmallestSide &&& volume)
+
 partTwo :: String -> Either String Int
-partTwo input = Left "not implemented"
+partTwo =
+  fmap (sum . map ribbonNeeded)
+    . traverse parsePresent
+    . lines
