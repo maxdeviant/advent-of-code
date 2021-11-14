@@ -2,6 +2,7 @@
 , dependencies =
   [ "aff"
   , "arrays"
+  , "bifunctors"
   , "console"
   , "effect"
   , "either"
@@ -15,6 +16,7 @@
   , "psci-support"
   , "spec"
   , "strings"
+  , "tuples"
   ]
 , packages = ./packages.dhall
 , sources = [ "src/**/*.purs", "test/**/*.purs" ]

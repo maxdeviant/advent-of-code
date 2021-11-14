@@ -2,17 +2,19 @@ module Day01.Main where
 
 import Prelude
 
-import Data.Array ((:))
 import Data.Array as Array
-import Data.Array.NonEmpty (NonEmptyArray, snoc, (!!))
+import Data.Array.NonEmpty (NonEmptyArray, (!!))
 import Data.Array.NonEmpty as NonEmptyArray
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..), note)
 import Data.Int as Int
-import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
+import Data.Maybe (Maybe)
+import Data.Newtype (class Newtype, unwrap)
 import Data.String (Pattern(..))
 import Data.String as String
-import Data.Traversable (traverse)
+import Data.Traversable (foldl, traverse)
+import Data.TraversableWithIndex (traverseWithIndex)
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Console (log, logShow)
 import Node.Encoding (Encoding(..))
@@ -41,37 +43,36 @@ parseDigits input =
       # Int.fromString
       # note ("Invalid digit: " <> digit)
 
-solveCaptcha :: Sequence -> Int
-solveCaptcha (Sequence digits') = go 0 circularDigits
-  where
-  firstDigit = NonEmptyArray.head digits'
+data SolveCaptchaError = OutOfBounds Int
 
-  circularDigits = (NonEmptyArray.toArray $ digits' `snoc` firstDigit)
+instance showSolveCaptureError :: Show SolveCaptchaError where
+  show (OutOfBounds position) = "Position out of bounds: " <> show position
 
-  go acc digits =
-    case uncons2 digits of
-      Just { x, y, rest } ->
-        if x == y then
-          go (acc + x) (y : rest)
-        else
-          go acc (y : rest)
-      Nothing -> acc
+type NextPosition = Int -> Int
 
-data NextDigitError = OutOfBounds Int
-
-nextDigit :: Sequence -> Int -> Either NextDigitError Int
-nextDigit (Sequence digits) position
-  | position == NonEmptyArray.length digits =
-      Right $ NonEmptyArray.head digits
-nextDigit (Sequence digits) position =
-  digits !! position
-    # note (OutOfBounds position)
+solveCaptcha :: NextPosition -> Sequence -> Either SolveCaptchaError Int
+solveCaptcha nextPosition (Sequence digits) = do
+  pairs <-
+    digits
+      # traverseWithIndex
+          ( \index digit -> do
+              nextDigit <- note (OutOfBounds index) $ digits !! nextPosition index
+              pure $ Tuple digit nextDigit
+          )
+  pure $ pairs
+    # NonEmptyArray.filter (\(Tuple a b) -> a == b)
+    # foldl (\acc (Tuple a _) -> acc + a) 0
 
 partOne :: String -> Either String Int
 partOne input = do
   sequence <- parseDigits input
 
-  pure $ solveCaptcha sequence
+  let
+    nextDigit position =
+      if position == (NonEmptyArray.length $ unwrap sequence) - 1 then 0
+      else position + 1
+
+  solveCaptcha nextDigit sequence # lmap show
 
 partTwo :: String -> Either String Int
 partTwo input = Left "Part Two not implemented."
