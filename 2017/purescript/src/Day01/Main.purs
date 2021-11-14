@@ -56,7 +56,8 @@ solveCaptcha nextPosition (Sequence digits) = do
     digits
       # traverseWithIndex
           ( \index digit -> do
-              nextDigit <- note (OutOfBounds index) $ digits !! nextPosition index
+              let nextIndex = nextPosition index
+              nextDigit <- note (OutOfBounds nextIndex) $ digits !! nextIndex
               pure $ Tuple digit nextDigit
           )
   pure $ pairs
@@ -75,7 +76,17 @@ partOne input = do
   solveCaptcha nextDigit sequence # lmap show
 
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  sequence <- parseDigits input
+
+  let
+    sequenceLength = NonEmptyArray.length (unwrap sequence)
+
+    step = sequenceLength / 2
+
+    nextDigit position = (position + step) `mod` sequenceLength
+
+  solveCaptcha nextDigit sequence # lmap show
 
 main :: Effect Unit
 main = do
