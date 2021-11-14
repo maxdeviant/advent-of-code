@@ -16,6 +16,7 @@
   , "psci-support"
   , "spec"
   , "strings"
+  , "stringutils"
   , "tuples"
   ]
 , packages = ./packages.dhall
