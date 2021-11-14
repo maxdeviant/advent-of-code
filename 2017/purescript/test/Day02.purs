@@ -19,4 +19,13 @@ day02Spec = do
       partOne input `shouldEqual` (Right 34581)
 
   describe "partTwo" do
-    pure unit
+    it "works with the sample input" do
+      let
+        input = "5 9 2 8\n9 4 7 3\n3 8 6 5"
+
+      partTwo input `shouldEqual` (Right 9)
+
+    it "returns the correct answer" do
+      input <- liftEffect $ readTextFile UTF8 "input/day02.txt"
+
+      partTwo input `shouldEqual` (Right 214)

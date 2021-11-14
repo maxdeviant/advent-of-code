@@ -4,6 +4,7 @@
   , "arrays"
   , "bifunctors"
   , "console"
+  , "debug"
   , "effect"
   , "either"
   , "foldable-traversable"
