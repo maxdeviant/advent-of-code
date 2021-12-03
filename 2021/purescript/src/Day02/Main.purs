@@ -23,13 +23,17 @@ import Node.FS.Sync (readTextFile)
 type Coordinates =
   { horizontalPosition :: Int
   , depth :: Int
+  , aim :: Int
   }
 
 mkHorizontalPosition :: Int -> Coordinates
-mkHorizontalPosition horizontalPosition = { horizontalPosition, depth: 0 }
+mkHorizontalPosition horizontalPosition = { horizontalPosition, depth: 0, aim: 0 }
 
 mkDepth :: Int -> Coordinates
-mkDepth depth = { depth, horizontalPosition: 0 }
+mkDepth depth = { depth, horizontalPosition: 0, aim: 0 }
+
+mkAim :: Int -> Coordinates
+mkAim aim = { aim, horizontalPosition: 0, depth: 0 }
 
 data Command
   = Forward Int
@@ -60,14 +64,29 @@ executeCommands = foldl
       Up units -> acc - mkDepth units
   )
 
+executeCommandsWithAim :: Coordinates -> Array Command -> Coordinates
+executeCommandsWithAim = foldl
+  ( \acc command -> case command of
+      Down units -> acc + mkAim units
+      Up units -> acc - mkAim units
+      Forward units -> acc +
+        { horizontalPosition: units
+        , depth: acc.aim * units
+        , aim: 0
+        }
+  )
+
 partOne :: String -> Either String Int
 partOne = lines
   >>> traverse parseCommand
-  >>> map (executeCommands { horizontalPosition: 0, depth: 0 })
+  >>> map (executeCommands { horizontalPosition: 0, depth: 0, aim: 0 })
   >>> map (\{ horizontalPosition, depth } -> horizontalPosition * depth)
 
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo = lines
+  >>> traverse parseCommand
+  >>> map (executeCommandsWithAim { horizontalPosition: 0, depth: 0, aim: 0 })
+  >>> map (\{ horizontalPosition, depth } -> horizontalPosition * depth)
 
 main :: Effect Unit
 main = do
