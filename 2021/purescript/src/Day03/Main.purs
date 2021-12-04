@@ -2,6 +2,7 @@ module Day03.Main where
 
 import Prelude
 
+import Data.Array ((!!))
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
@@ -9,6 +10,7 @@ import Data.FoldableWithIndex (foldlWithIndex)
 import Data.Int (pow)
 import Data.Map (Map)
 import Data.Map as Map
+import Data.Maybe (Maybe(..))
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (class Newtype, over2, unwrap, wrap)
 import Data.String (Pattern(..))
@@ -73,6 +75,20 @@ derive instance Newtype EpsilonRate _
 derive newtype instance Eq EpsilonRate
 derive newtype instance Show EpsilonRate
 
+newtype OxygenGeneratorRating = OxygenGeneratorRating BinaryNumber
+
+derive instance Newtype OxygenGeneratorRating _
+
+derive newtype instance Eq OxygenGeneratorRating
+derive newtype instance Show OxygenGeneratorRating
+
+newtype Co2ScrubberRating = Co2ScrubberRating BinaryNumber
+
+derive instance Newtype Co2ScrubberRating _
+
+derive newtype instance Eq Co2ScrubberRating
+derive newtype instance Show Co2ScrubberRating
+
 newtype BitOccurrences = BitOccurrences
   { zero :: Additive Int
   , one :: Additive Int
@@ -133,6 +149,38 @@ calculatePowerConsumption :: GammaRate -> EpsilonRate -> Int
 calculatePowerConsumption gammaRate epsilonRate =
   (toDecimal $ unwrap gammaRate) * (toDecimal $ unwrap epsilonRate)
 
+calculateOxygenGeneratorRating :: Array BinaryNumber -> OxygenGeneratorRating
+calculateOxygenGeneratorRating = go 0
+  where
+  go position =
+    case _ of
+      [ number ] -> wrap number
+      numbers ->
+        let
+          { yes: ones, no: zeros } = numbers # Array.partition (\number -> unwrap number !! position == Just One)
+
+          keep = if Array.length ones >= Array.length zeros then ones else zeros
+        in
+          go (position + 1) keep
+
+calculateCo2ScrubberRating :: Array BinaryNumber -> Co2ScrubberRating
+calculateCo2ScrubberRating = go 0
+  where
+  go position =
+    case _ of
+      [ number ] -> wrap number
+      numbers ->
+        let
+          { yes: ones, no: zeros } = numbers # Array.partition (\number -> unwrap number !! position == Just One)
+
+          keep = if Array.length ones < Array.length zeros then ones else zeros
+        in
+          go (position + 1) keep
+
+calculateLifeSupportRating :: OxygenGeneratorRating -> Co2ScrubberRating -> Int
+calculateLifeSupportRating oxygenGeneratorRating co2ScrubberRating =
+  (toDecimal $ unwrap oxygenGeneratorRating) * (toDecimal $ unwrap co2ScrubberRating)
+
 partOne :: String -> Either String Int
 partOne input = do
   numbers <- input # lines # traverse parseBinaryNumber
@@ -143,7 +191,13 @@ partOne input = do
   pure $ calculatePowerConsumption gammaRate epsilonRate
 
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  numbers <- input # lines # traverse parseBinaryNumber
+
+  let oxygenGeneratorRating = calculateOxygenGeneratorRating numbers
+  let co2ScrubberRating = calculateCo2ScrubberRating numbers
+
+  pure $ calculateLifeSupportRating oxygenGeneratorRating co2ScrubberRating
 
 main :: Effect Unit
 main = do

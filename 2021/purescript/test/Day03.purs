@@ -5,12 +5,12 @@ import Prelude
 import Data.Either (Either(..))
 import Data.Newtype (wrap)
 import Data.String as String
-import Day03.Main (BinaryNumber(..), Bit(..), GammaRate(..), calculateGammaRate, partOne, toDecimal)
+import Day03.Main (BinaryNumber(..), Bit(..), GammaRate(..), OxygenGeneratorRating(..), calculateGammaRate, calculateOxygenGeneratorRating, partOne, partTwo, toDecimal)
 import Effect.Class (liftEffect)
 import Node.Encoding (Encoding(..))
 import Node.FS.Sync (readTextFile)
 import Safe.Coerce (coerce)
-import Test.Spec (Spec, describe, it, pending')
+import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 day03Spec :: Spec Unit
@@ -42,25 +42,45 @@ day03Spec = do
 
       calculateGammaRate numbers `shouldEqual` (coerce [ One, Zero, One, One, Zero ] :: GammaRate)
 
-  describe "partOne" do
+  describe "calculateOxygenGeneratorRating" do
     it "works on the sample input" do
       let
-        sampleInput =
-          [ "00100"
-          , "11110"
-          , "10110"
-          , "10111"
-          , "10101"
-          , "01111"
-          , "00111"
-          , "11100"
-          , "10000"
-          , "11001"
-          , "00010"
-          , "01010"
+        numbers =
+          [ wrap [ Zero, Zero, One, Zero, Zero ]
+          , wrap [ One, One, One, One, Zero ]
+          , wrap [ One, Zero, One, One, Zero ]
+          , wrap [ One, Zero, One, One, One ]
+          , wrap [ One, Zero, One, Zero, One ]
+          , wrap [ Zero, One, One, One, One ]
+          , wrap [ Zero, Zero, One, One, One ]
+          , wrap [ One, One, One, Zero, Zero ]
+          , wrap [ One, Zero, Zero, Zero, Zero ]
+          , wrap [ One, One, Zero, Zero, One ]
+          , wrap [ Zero, Zero, Zero, One, Zero ]
+          , wrap [ Zero, One, Zero, One, Zero ]
           ]
-            # String.joinWith "\n"
 
+      calculateOxygenGeneratorRating numbers `shouldEqual` (coerce [ One, Zero, One, One, One ] :: OxygenGeneratorRating)
+
+  let
+    sampleInput =
+      [ "00100"
+      , "11110"
+      , "10110"
+      , "10111"
+      , "10101"
+      , "01111"
+      , "00111"
+      , "11100"
+      , "10000"
+      , "11001"
+      , "00010"
+      , "01010"
+      ]
+        # String.joinWith "\n"
+
+  describe "partOne" do
+    it "works on the sample input" do
       partOne sampleInput `shouldEqual` (Right 198)
 
     it "returns the correct answer" do
@@ -69,7 +89,10 @@ day03Spec = do
       partOne input `shouldEqual` (Right 2972336)
 
   describe "partTwo" do
-    pending' "returns the correct answer" do
+    it "works on the sample input" do
+      partTwo sampleInput `shouldEqual` (Right 230)
+
+    it "returns the correct answer" do
       input <- liftEffect $ readTextFile UTF8 "input/day03.txt"
 
-      pure unit
+      partTwo input `shouldEqual` (Right 3368358)
