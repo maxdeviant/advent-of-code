@@ -11,9 +11,12 @@
   , "newtype"
   , "node-buffer"
   , "node-fs"
+  , "ordered-collections"
   , "prelude"
   , "psci-support"
+  , "safe-coerce"
   , "spec"
+  , "strings"
   , "stringutils"
   ]
 , packages = ./packages.dhall
