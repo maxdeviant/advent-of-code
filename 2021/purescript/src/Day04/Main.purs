@@ -100,6 +100,37 @@ firstWinningBoard drawnNumbers boards =
           Nothing -> firstWinningBoard tail boards'
     Nothing -> Nothing
 
+lastWinningBoard :: Array Int -> Array BingoBoard -> Maybe { winningBoard :: BingoBoard, drawnNumber :: Int }
+lastWinningBoard = go [] 0
+  where
+  go wonBoards lastCalledNumber _ [] =
+    wonBoards
+      # Array.last
+      # map
+          ( \lastWonBoard ->
+              { winningBoard: lastWonBoard
+              , drawnNumber: lastCalledNumber
+              }
+          )
+  go wonBoards lastCalledNumber drawnNumbers boards =
+    case uncons drawnNumbers of
+      Just { head: drawnNumber, tail } ->
+        let
+          boards' = boards # map (mark drawnNumber)
+
+          { yes: winningBoards, no: nonWinningBoards } = boards' # Array.partition hasWon
+        in
+          go (Array.concat [ wonBoards, winningBoards ]) drawnNumber tail nonWinningBoards
+      Nothing ->
+        wonBoards
+          # Array.last
+          # map
+              ( \lastWonBoard ->
+                  { winningBoard: lastWonBoard
+                  , drawnNumber: lastCalledNumber
+                  }
+              )
+
 partOne :: String -> Either String Int
 partOne input = do
   { drawnNumbers, boards } <- parseInput input
@@ -109,7 +140,12 @@ partOne input = do
   pure $ score winningBoard drawnNumber
 
 partTwo :: String -> Either String Int
-partTwo input = Left "Part Two not implemented."
+partTwo input = do
+  { drawnNumbers, boards } <- parseInput input
+
+  { winningBoard, drawnNumber } <- lastWinningBoard drawnNumbers boards # note "No winning board found!"
+
+  pure $ score winningBoard drawnNumber
 
 main :: Effect Unit
 main = do
