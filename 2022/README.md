@@ -2,5 +2,6 @@
 
 ## Other Participants
 
-| Repository | Language |
-| ---------- | -------- |
+| Repository                                                                                 | Language   |
+| ------------------------------------------------------------------------------------------ | ---------- |
+| [lukemorales/advent-of-code](https://github.com/lukemorales/advent-of-code/tree/main/2022) | TypeScript |
