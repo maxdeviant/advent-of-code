@@ -1,6 +1,8 @@
+use std::num::ParseIntError;
+
 use adventurous::Input;
 
-fn part_one(input: &Input) -> i32 {
+fn calculate_carried_calories(input: &Input) -> Result<Vec<i32>, ParseIntError> {
     let chunked_lines = input
         .value
         .lines()
@@ -19,7 +21,7 @@ fn part_one(input: &Input) -> i32 {
             return acc;
         });
 
-    let elves = chunked_lines
+    chunked_lines
         .into_iter()
         .map(|chunk| {
             chunk
@@ -29,16 +31,24 @@ fn part_one(input: &Input) -> i32 {
                 .map(|calories| calories.iter().sum())
         })
         .collect::<Result<Vec<i32>, _>>()
-        .expect("failed to parse input");
+}
 
-    elves
+fn part_one(input: &Input) -> i32 {
+    calculate_carried_calories(&input)
+        .expect("failed to calculate carried calories")
         .into_iter()
         .max()
         .expect("no elf carrying the most calories")
 }
 
 fn part_two(input: &Input) -> i32 {
-    0
+    let mut carried_calories =
+        calculate_carried_calories(&input).expect("failed to calculate carried calories");
+
+    carried_calories.sort_unstable();
+    carried_calories.reverse();
+
+    carried_calories.into_iter().take(3).sum()
 }
 
 fn main() -> std::io::Result<()> {
@@ -48,4 +58,23 @@ fn main() -> std::io::Result<()> {
     println!("Part Two: {}", part_two(&input));
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_part_one_solution() -> std::io::Result<()> {
+        let input = Input::from_file("input.txt")?;
+
+        Ok(assert_eq!(part_one(&input), 71934))
+    }
+
+    #[test]
+    fn test_part_two_solution() -> std::io::Result<()> {
+        let input = Input::from_file("input.txt")?;
+
+        Ok(assert_eq!(part_two(&input), 211447))
+    }
 }
