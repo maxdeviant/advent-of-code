@@ -6,11 +6,21 @@ trait Scoring {
     fn get_score(&self) -> i32;
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum Shape {
     Rock,
     Paper,
     Scissors,
+}
+
+impl Shape {
+    fn counter(&self) -> Self {
+        match self {
+            Shape::Rock => Shape::Paper,
+            Shape::Paper => Shape::Scissors,
+            Shape::Scissors => Shape::Rock,
+        }
+    }
 }
 
 impl Scoring for Shape {
@@ -42,6 +52,19 @@ enum RoundOutcome {
     Won,
     Lost,
     Draw,
+}
+
+impl FromStr for RoundOutcome {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "X" => Ok(Self::Lost),
+            "Y" => Ok(Self::Draw),
+            "Z" => Ok(Self::Won),
+            _ => Err(format!("'{}' is not a valid round outcome.", s)),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -79,6 +102,21 @@ impl Scoring for Round {
     }
 }
 
+impl From<RiggedRound> for Round {
+    fn from(rigged: RiggedRound) -> Self {
+        let shape_to_choose = match (rigged.desired_outcome, &rigged.opponent) {
+            (RoundOutcome::Won, opponent) => opponent.counter(),
+            (RoundOutcome::Draw, opponent) => *opponent,
+            (RoundOutcome::Lost, opponent) => opponent.counter().counter(),
+        };
+
+        Self {
+            opponent: rigged.opponent,
+            counter: shape_to_choose,
+        }
+    }
+}
+
 impl FromStr for Round {
     type Err = String;
 
@@ -109,8 +147,44 @@ fn part_one(input: &Input) -> i32 {
     rounds.into_iter().map(|round| round.get_score()).sum()
 }
 
+#[derive(Debug)]
+struct RiggedRound {
+    opponent: Shape,
+    desired_outcome: RoundOutcome,
+}
+
+impl FromStr for RiggedRound {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut moves = s.split(" ").take(2);
+
+        let opponent = moves
+            .next()
+            .ok_or_else(|| format!("no move for opponent"))
+            .and_then(|shape| shape.parse())?;
+        let desired_outcome = moves
+            .next()
+            .ok_or_else(|| format!("no desired outcome"))
+            .and_then(|shape| shape.parse())?;
+
+        Ok(Self {
+            opponent,
+            desired_outcome,
+        })
+    }
+}
+
 fn part_two(input: &Input) -> i32 {
-    0
+    let rounds = input
+        .value
+        .lines()
+        .map(RiggedRound::from_str)
+        .map(|result| result.map(Round::from))
+        .collect::<Result<Vec<_>, _>>()
+        .expect("failed to parse input");
+
+    rounds.into_iter().map(|round| round.get_score()).sum()
 }
 
 fn main() -> std::io::Result<()> {
@@ -134,11 +208,17 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Part 2 not yet done"]
     fn test_part_two_solution() -> std::io::Result<()> {
         let input = Input::from_file("input.txt")?;
 
-        Ok(assert_eq!(part_two(&input), 0))
+        Ok(assert_eq!(part_two(&input), 12411))
+    }
+
+    #[test]
+    fn test_double_counter() {
+        assert_eq!(Shape::Rock.counter().counter(), Shape::Scissors);
+        assert_eq!(Shape::Paper.counter().counter(), Shape::Rock);
+        assert_eq!(Shape::Scissors.counter().counter(), Shape::Paper);
     }
 
     #[test]
