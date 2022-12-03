@@ -13,6 +13,14 @@ struct Rucksack {
 }
 
 impl Rucksack {
+    pub fn unique_items(&self) -> HashSet<&Item> {
+        HashSet::from_iter(
+            self.first_compartment
+                .iter()
+                .chain(self.second_compartment.iter()),
+        )
+    }
+
     pub fn items_in_both_compartments(&self) -> HashSet<&Item> {
         let mut items = HashSet::new();
 
@@ -88,8 +96,62 @@ fn part_one(input: &Input) -> usize {
         .sum()
 }
 
-fn part_two(input: &Input) -> i32 {
-    0
+#[derive(Debug, Clone, Copy)]
+struct Badge(Item);
+
+impl From<Badge> for Item {
+    fn from(badge: Badge) -> Self {
+        badge.0
+    }
+}
+
+struct Group<'a> {
+    elves: &'a [Rucksack; 3],
+}
+
+impl<'a> Group<'a> {
+    pub fn new(rucksacks: &'a [Rucksack]) -> Self {
+        Self {
+            elves: rucksacks.try_into().unwrap(),
+        }
+    }
+
+    pub fn badge(&self) -> Option<Badge> {
+        let x = self.elves[0].unique_items();
+        let y = self.elves[1].unique_items();
+        let z = self.elves[2].unique_items();
+
+        let x_intersect_y: HashSet<_> = x.intersection(&y).map(|item| *item).collect();
+        let xy_intersect_z: HashSet<_> = x_intersect_y.intersection(&z).map(|item| *item).collect();
+
+        xy_intersect_z
+            .iter()
+            .next()
+            .cloned()
+            .map(|item| Badge(*item))
+    }
+}
+
+fn part_two(input: &Input) -> usize {
+    let priorities = ItemPriorities::new();
+
+    let rucksacks = input
+        .value
+        .lines()
+        .map(|line| line.parse::<Rucksack>())
+        .collect::<Result<Vec<_>, _>>()
+        .expect("failed to parse rucksacks");
+
+    rucksacks
+        .chunks(3)
+        .map(Group::new)
+        .map(|group| group.badge().expect("failed to get badge for group"))
+        .map(|badge| {
+            priorities
+                .get_priority(&badge.into())
+                .expect(&format!("no priority found for {:?}", badge))
+        })
+        .sum()
 }
 
 fn main() -> std::io::Result<()> {
@@ -113,11 +175,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Not yet solved"]
     fn test_part_two_solution() -> std::io::Result<()> {
         let input = Input::from_file("input.txt")?;
 
-        Ok(assert_eq!(part_two(&input), 0))
+        Ok(assert_eq!(part_two(&input), 2577))
     }
 
     #[test]
