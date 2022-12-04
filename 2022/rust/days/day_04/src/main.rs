@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
@@ -11,6 +12,15 @@ struct SectionAssignment(i32, i32);
 impl SectionAssignment {
     pub fn fully_contains(&self, other: &Self) -> bool {
         self.0 <= other.0 && self.1 >= other.1
+    }
+
+    pub fn overlaps_with(&self, other: &Self) -> bool {
+        let first_assignment: HashSet<i32> = HashSet::from_iter(self.0..=self.1);
+        let second_assignment = HashSet::from_iter(other.0..=other.1);
+
+        let overlap: HashSet<_> = first_assignment.intersection(&second_assignment).collect();
+
+        !overlap.is_empty()
     }
 }
 
@@ -71,15 +81,24 @@ fn part_one(input: &Input) -> Result<usize> {
         .count())
 }
 
-fn part_two(input: &Input) -> i32 {
-    0
+fn part_two(input: &Input) -> Result<usize> {
+    let section_assignment_pairs = input
+        .value
+        .lines()
+        .map(|line| line.parse::<SectionAssignmentPair>())
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(section_assignment_pairs
+        .iter()
+        .filter(|pair| pair.0.overlaps_with(&pair.1))
+        .count())
 }
 
 fn main() -> Result<()> {
     let input = Input::from_file("input.txt")?;
 
     println!("Part One: {}", part_one(&input)?);
-    println!("Part Two: {}", part_two(&input));
+    println!("Part Two: {}", part_two(&input)?);
 
     Ok(())
 }
@@ -89,19 +108,17 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore = "Not not solved"]
     fn test_part_one_solution() -> Result<()> {
         let input = Input::from_file("input.txt")?;
 
-        Ok(assert_eq!(part_one(&input)?, 0))
+        Ok(assert_eq!(part_one(&input)?, 651))
     }
 
     #[test]
-    #[ignore = "Not not solved"]
-    fn test_part_two_solution() -> std::io::Result<()> {
+    fn test_part_two_solution() -> Result<()> {
         let input = Input::from_file("input.txt")?;
 
-        Ok(assert_eq!(part_two(&input), 0))
+        Ok(assert_eq!(part_two(&input)?, 956))
     }
 
     #[test]
@@ -120,5 +137,23 @@ mod tests {
         };
 
         Ok(assert_eq!(part_one(&input)?, 2))
+    }
+
+    #[test]
+    fn test_part_two_sample_input() -> Result<()> {
+        let input = Input {
+            value: r#"
+2-4,6-8
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8
+            "#
+            .trim()
+            .to_string(),
+        };
+
+        Ok(assert_eq!(part_two(&input)?, 4))
     }
 }
