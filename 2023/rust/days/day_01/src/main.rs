@@ -1,15 +1,25 @@
+use std::collections::VecDeque;
+
 use adventurous::Input;
 use anyhow::{anyhow, Result};
 
-fn parse_calibration_value(chars: impl IntoIterator<Item = char>) -> Result<i32> {
-    let mut digits = chars.into_iter().filter(|char| char.is_digit(10));
-    let first_digit = digits.next().ok_or(anyhow!("no first digit"))?;
-    let second_digit = digits.last().unwrap_or(first_digit);
-
-    Ok(format!("{first_digit}{second_digit}").parse::<i32>()?)
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+enum ParsingStrategy {
+    DigitsOnly,
+    DigitsAndWords,
 }
 
-fn parse_digits(line: &str) -> Vec<char> {
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+enum ParseDirection {
+    Forwards,
+    Backwards,
+}
+
+struct DigitLocator {
+    strategy: ParsingStrategy,
+}
+
+impl DigitLocator {
     const REPLACEMENTS: [(&str, char); 9] = [
         ("one", '1'),
         ("two", '2'),
@@ -22,48 +32,90 @@ fn parse_digits(line: &str) -> Vec<char> {
         ("nine", '9'),
     ];
 
-    let mut digits = Vec::new();
-    let mut current_word = Vec::new();
-
-    for char in line.chars() {
-        if char.is_digit(10) {
-            digits.push(char);
-            continue;
-        }
-
-        current_word.push(char);
-
-        let word = current_word.iter().collect::<String>();
-
-        for (pattern, replacement) in &REPLACEMENTS {
-            if word.contains(pattern) {
-                digits.push(*replacement);
-
-                current_word = word.replace(pattern, "").chars().collect();
-                break;
-            }
+    fn digits_only() -> Self {
+        Self {
+            strategy: ParsingStrategy::DigitsOnly,
         }
     }
 
-    digits
+    fn digits_and_words() -> Self {
+        Self {
+            strategy: ParsingStrategy::DigitsAndWords,
+        }
+    }
+
+    fn digit(&self, direction: ParseDirection, input: &str) -> Option<char> {
+        let mut current_word = VecDeque::new();
+
+        let chars: Box<dyn Iterator<Item = _>> = match direction {
+            ParseDirection::Forwards => Box::new(input.chars()),
+            ParseDirection::Backwards => Box::new(input.chars().rev()),
+        };
+
+        for char in chars {
+            if char.is_digit(10) {
+                return Some(char);
+            }
+
+            match self.strategy {
+                ParsingStrategy::DigitsOnly => {}
+                ParsingStrategy::DigitsAndWords => {
+                    match direction {
+                        ParseDirection::Forwards => current_word.push_back(char),
+                        ParseDirection::Backwards => current_word.push_front(char),
+                    }
+
+                    let word = current_word.iter().collect::<String>();
+
+                    for (pattern, digit) in &Self::REPLACEMENTS {
+                        if word.contains(pattern) {
+                            return Some(*digit);
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
+    fn first(&self, input: &str) -> Option<char> {
+        self.digit(ParseDirection::Forwards, input)
+    }
+
+    fn last(&self, input: &str) -> Option<char> {
+        self.digit(ParseDirection::Backwards, input)
+    }
+}
+
+fn parse_calibration_value(digit_locator: &DigitLocator, line: &str) -> Result<i32> {
+    let first_digit = digit_locator
+        .first(&line)
+        .ok_or(anyhow!("no first digit"))?;
+    let last_digit = digit_locator.last(&line).ok_or(anyhow!("no last digit"))?;
+
+    Ok(format!("{first_digit}{last_digit}").parse::<i32>()?)
 }
 
 fn part_one(input: &Input) -> Result<i32> {
+    let digit_locator = DigitLocator::digits_only();
+
     Ok(input
         .value
         .lines()
-        .map(|line| parse_calibration_value(line.chars()))
+        .map(|line| parse_calibration_value(&digit_locator, line))
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .sum())
 }
 
 fn part_two(input: &Input) -> Result<i32> {
+    let digit_locator = DigitLocator::digits_and_words();
+
     Ok(input
         .value
         .lines()
-        .map(parse_digits)
-        .map(parse_calibration_value)
+        .map(|line| parse_calibration_value(&digit_locator, line))
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
         .sum())
@@ -93,11 +145,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "not yet solved"]
     fn test_part_two_solution() -> Result<()> {
         let input = Input::from_file("input.txt")?;
 
-        Ok(assert_eq!(part_two(&input)?, 0))
+        Ok(assert_eq!(part_two(&input)?, 54203))
     }
 
     #[test]
@@ -132,24 +183,36 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_digits() {
+    fn test_digit_locator() {
         let cases = [
-            ("two1nine", "219"),
-            ("eightwothree", "83"),
-            ("abcone2threexyz", "123"),
-            ("xtwone3four", "234"),
-            ("4nineeightseven2", "49872"),
-            ("zoneight234", "1234"),
-            ("7pqrstsixteen", "76"),
-            ("sevenbsixsbzmone55", "76155"),
-            ("twoxdmnvdnrd3smlzkbrqcvonekgzlbjgvnlpcvclcv2", "2312"),
-            ("three2rtlcxqnbjj8fourhsevenbkmvpdone", "328471"),
+            ("oneight", '1', '8'),
+            ("eighthree", '8', '3'),
+            ("two1nine", '2', '9'),
+            ("eightwothree", '8', '3'),
+            ("abcone2threexyz", '1', '3'),
+            ("xtwone3four", '2', '4'),
+            ("4nineeightseven2", '4', '2'),
+            ("zoneight234", '1', '4'),
+            ("7pqrstsixteen", '7', '6'),
+            ("sevenbsixsbzmone55", '7', '5'),
+            ("twoxdmnvdnrd3smlzkbrqcvonekgzlbjgvnlpcvclcv2", '2', '2'),
+            ("three2rtlcxqnbjj8fourhsevenbkmvpdone", '3', '1'),
+            ("9zngoneoneightzdz", '9', '8'),
         ];
 
-        for (input, expected) in cases {
-            let expected = expected.chars().collect::<Vec<_>>();
+        let locator = DigitLocator::digits_and_words();
 
-            assert_eq!(parse_digits(input), expected);
+        for (input, expected_first, expected_last) in cases {
+            assert_eq!(
+                locator.first(&input),
+                Some(expected_first),
+                "no first digit found for '{input}'"
+            );
+            assert_eq!(
+                locator.last(&input),
+                Some(expected_last),
+                "no last digit found for '{input}'"
+            );
         }
     }
 }
