@@ -3,7 +3,7 @@ resolver = "2"
 members = ["days/*"]
 
 [workspace.dependencies]
-adventurous = { git = "https://github.com/maxdeviant/adventurous.git", rev = "0d0b533d78cbf5bb28637ffe012ac1f89090f680" }
+adventurous = "0.2.0"
 anyhow = "1.0"
 enum-map = "2.7.3"
 indoc = "2.0.4"
