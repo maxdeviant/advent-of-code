@@ -57,7 +57,7 @@ impl Game {
         let mut minimum_cubes_required = enum_map! {
             Red => 0,
             Green => 0,
-            Blue => 0
+            Blue => 0,
         };
 
         for set in &self.sets {
@@ -80,7 +80,7 @@ fn part_one(input: &Input) -> Result<usize> {
     let cube_counts = enum_map! {
         Red => 12,
         Green => 13,
-        Blue => 14
+        Blue => 14,
     };
 
     let games = input
