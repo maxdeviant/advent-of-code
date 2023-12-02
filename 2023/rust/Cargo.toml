@@ -3,7 +3,7 @@ resolver = "2"
 members = ["days/*"]
 
 [workspace.dependencies]
-adventurous = "0.0.3"
+adventurous = "0.1.0"
 anyhow = "1.0"
 enum-map = "2.7.3"
 indoc = "2.0.4"

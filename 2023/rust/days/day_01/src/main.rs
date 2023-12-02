@@ -101,7 +101,6 @@ fn part_one(input: &Input) -> Result<i32> {
     let digit_locator = DigitLocator::digits_only();
 
     Ok(input
-        .value
         .lines()
         .map(|line| parse_calibration_value(&digit_locator, line))
         .collect::<Result<Vec<_>, _>>()?
@@ -113,7 +112,6 @@ fn part_two(input: &Input) -> Result<i32> {
     let digit_locator = DigitLocator::digits_and_words();
 
     Ok(input
-        .value
         .lines()
         .map(|line| parse_calibration_value(&digit_locator, line))
         .collect::<Result<Vec<_>, _>>()?
@@ -122,12 +120,7 @@ fn part_two(input: &Input) -> Result<i32> {
 }
 
 fn main() -> Result<()> {
-    let input = Input::from_file("days/day_01/input.txt")?;
-
-    println!("Part One: {}", part_one(&input)?);
-    println!("Part Two: {}", part_two(&input)?);
-
-    Ok(())
+    adventurous::run("days/day_01/input.txt", part_one, part_two)
 }
 
 #[cfg(test)]

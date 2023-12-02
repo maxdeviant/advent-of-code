@@ -84,7 +84,6 @@ fn part_one(input: &Input) -> Result<usize> {
     };
 
     let games = input
-        .value
         .lines()
         .map(Game::parse)
         .collect::<Result<Vec<_>, _>>()?;
@@ -98,7 +97,6 @@ fn part_one(input: &Input) -> Result<usize> {
 
 fn part_two(input: &Input) -> Result<usize> {
     let games = input
-        .value
         .lines()
         .map(Game::parse)
         .collect::<Result<Vec<_>, _>>()?;
@@ -110,12 +108,7 @@ fn part_two(input: &Input) -> Result<usize> {
 }
 
 fn main() -> Result<()> {
-    let input = Input::from_file("days/day_02/input.txt")?;
-
-    println!("Part One: {}", part_one(&input)?);
-    println!("Part Two: {}", part_two(&input)?);
-
-    Ok(())
+    adventurous::run("days/day_02/input.txt", part_one, part_two)
 }
 
 #[cfg(test)]
