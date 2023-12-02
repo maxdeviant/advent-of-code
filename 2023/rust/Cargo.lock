@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "adventurous"
 version = "0.1.0"
-source = "git+https://github.com/maxdeviant/adventurous.git?rev=2c1906caab825ba6dad835b8ffc151d03816d727#2c1906caab825ba6dad835b8ffc151d03816d727"
+source = "git+https://github.com/maxdeviant/adventurous.git?rev=0d0b533d78cbf5bb28637ffe012ac1f89090f680#0d0b533d78cbf5bb28637ffe012ac1f89090f680"
 dependencies = [
  "anyhow",
  "pretty_assertions",

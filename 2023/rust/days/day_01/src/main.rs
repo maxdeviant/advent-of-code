@@ -100,23 +100,19 @@ fn parse_calibration_value(digit_locator: &DigitLocator, line: &str) -> Result<i
 fn part_one(input: &Input) -> Result<i32> {
     let digit_locator = DigitLocator::digits_only();
 
-    Ok(input
-        .lines()
-        .map(|line| parse_calibration_value(&digit_locator, line))
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .sum())
+    let calibration_values =
+        input.traverse(|line| parse_calibration_value(&digit_locator, line))?;
+
+    Ok(calibration_values.sum())
 }
 
 fn part_two(input: &Input) -> Result<i32> {
     let digit_locator = DigitLocator::digits_and_words();
 
-    Ok(input
-        .lines()
-        .map(|line| parse_calibration_value(&digit_locator, line))
-        .collect::<Result<Vec<_>, _>>()?
-        .into_iter()
-        .sum())
+    let calibration_values =
+        input.traverse(|line| parse_calibration_value(&digit_locator, line))?;
+
+    Ok(calibration_values.sum())
 }
 
 fn main() -> Result<()> {

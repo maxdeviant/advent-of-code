@@ -83,26 +83,16 @@ fn part_one(input: &Input) -> Result<usize> {
         Blue => 14,
     };
 
-    let games = input
-        .lines()
-        .map(Game::parse)
-        .collect::<Result<Vec<_>, _>>()?;
-
-    Ok(games
-        .into_iter()
+    Ok(input
+        .traverse(Game::parse)?
         .filter(|game| game.possibility(&cube_counts) == GamePossibility::Possible)
         .map(|game| game.id)
         .sum())
 }
 
 fn part_two(input: &Input) -> Result<usize> {
-    let games = input
-        .lines()
-        .map(Game::parse)
-        .collect::<Result<Vec<_>, _>>()?;
-
-    Ok(games
-        .into_iter()
+    Ok(input
+        .traverse(Game::parse)?
         .map(|game| game.minimum_cubes_power())
         .sum())
 }
