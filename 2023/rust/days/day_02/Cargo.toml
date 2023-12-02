@@ -1,0 +1,14 @@
+[package]
+name = "day_02"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+adventurous.workspace = true
+anyhow.workspace = true
+enum-map.workspace = true
+nom.workspace = true
+
+[dev-dependencies]
+indoc.workspace = true
+pretty_assertions.workspace = true

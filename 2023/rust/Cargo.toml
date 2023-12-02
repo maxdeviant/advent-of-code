@@ -5,5 +5,7 @@ members = ["days/*"]
 [workspace.dependencies]
 adventurous = "0.0.3"
 anyhow = "1.0"
+enum-map = "2.7.3"
 indoc = "2.0.4"
+nom = "7.1.3"
 pretty_assertions = "1.4.0"
