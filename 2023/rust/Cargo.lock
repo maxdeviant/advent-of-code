@@ -5,10 +5,10 @@ version = 3
 [[package]]
 name = "adventurous"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af7440e1d8499f40d29fc11c92c0fe6f0889731c5ab0535f9f7e30df41ec88fd"
+source = "git+https://github.com/maxdeviant/adventurous.git?rev=2c1906caab825ba6dad835b8ffc151d03816d727#2c1906caab825ba6dad835b8ffc151d03816d727"
 dependencies = [
  "anyhow",
+ "pretty_assertions",
 ]
 
 [[package]]

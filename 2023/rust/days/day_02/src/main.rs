@@ -113,24 +113,14 @@ fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
+    use adventurous::{test_part_one_solution, test_part_two_solution};
     use indoc::indoc;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    #[test]
-    fn test_part_one_solution() -> Result<()> {
-        let input = Input::from_file("input.txt")?;
-
-        Ok(assert_eq!(part_one(&input)?, 1853))
-    }
-
-    #[test]
-    fn test_part_two_solution() -> Result<()> {
-        let input = Input::from_file("input.txt")?;
-
-        Ok(assert_eq!(part_two(&input)?, 72706))
-    }
+    test_part_one_solution!("input.txt", 1853);
+    test_part_two_solution!("input.txt", 72706);
 
     #[test]
     fn test_part_one_sample_input() -> Result<()> {
