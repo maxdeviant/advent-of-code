@@ -51,6 +51,29 @@ impl Game {
 
         GamePossibility::Possible
     }
+
+    /// Returns the minimum number of cubes required for this game to be possible
+    fn minimum_cubes_required(&self) -> EnumMap<Cube, usize> {
+        let mut minimum_cubes_required = enum_map! {
+            Red => 0,
+            Green => 0,
+            Blue => 0
+        };
+
+        for set in &self.sets {
+            for (cube, count) in set {
+                minimum_cubes_required[*cube] = minimum_cubes_required[*cube].max(*count);
+            }
+        }
+
+        minimum_cubes_required
+    }
+
+    fn minimum_cubes_power(&self) -> usize {
+        let minimum_cubes = self.minimum_cubes_required();
+
+        minimum_cubes[Red] * minimum_cubes[Green] * minimum_cubes[Blue]
+    }
 }
 
 fn part_one(input: &Input) -> Result<usize> {
@@ -73,8 +96,17 @@ fn part_one(input: &Input) -> Result<usize> {
         .sum())
 }
 
-fn part_two(input: &Input) -> Result<i32> {
-    todo!()
+fn part_two(input: &Input) -> Result<usize> {
+    let games = input
+        .value
+        .lines()
+        .map(Game::parse)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(games
+        .into_iter()
+        .map(|game| game.minimum_cubes_power())
+        .sum())
 }
 
 fn main() -> Result<()> {
@@ -101,11 +133,10 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "not yet solved"]
     fn test_part_two_solution() -> Result<()> {
         let input = Input::from_file("input.txt")?;
 
-        Ok(assert_eq!(part_two(&input)?, 0))
+        Ok(assert_eq!(part_two(&input)?, 72706))
     }
 
     #[test]
@@ -124,12 +155,16 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "skipped"]
     fn test_part_two_sample_input() -> Result<()> {
         let input = indoc! {"
+            Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+            Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+            Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+            Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+            Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
         "};
 
-        assert_eq!(part_two(&Input::new(input.to_string()))?, 0);
+        assert_eq!(part_two(&Input::new(input.to_string()))?, 2286);
 
         Ok(())
     }
@@ -149,5 +184,28 @@ mod tests {
                 ]
             }
         )
+    }
+
+    #[test]
+    fn test_minimum_cubes_required() {
+        let game = Game::parse("Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green").unwrap();
+
+        assert_eq!(
+            game.minimum_cubes_required(),
+            enum_map! {
+                Red => 4,
+                Green => 2,
+                Blue => 6,
+            }
+        )
+    }
+
+    #[test]
+    fn test_minimum_cubes_power() {
+        let game =
+            Game::parse("Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red")
+                .unwrap();
+
+        assert_eq!(game.minimum_cubes_power(), 1560);
     }
 }
