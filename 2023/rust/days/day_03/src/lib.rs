@@ -117,8 +117,7 @@ impl Schematic {
                 continue;
             }
 
-            let (coords, digits): (Vec<Point>, Vec<&char>) =
-                current_number.clone().into_iter().unzip();
+            let (coords, digits): (Vec<Point>, Vec<char>) = current_number.iter().copied().unzip();
 
             let part_number = digits
                 .into_iter()
@@ -126,8 +125,8 @@ impl Schematic {
                 .parse::<usize>()
                 .unwrap();
 
-            let lo = coords.iter().min().cloned().unwrap();
-            let hi = coords.iter().max().cloned().unwrap();
+            let lo = coords.iter().min().copied().unwrap();
+            let hi = coords.iter().max().copied().unwrap();
 
             spanned_numbers.push((part_number, Span::new(lo, hi)));
 
