@@ -9,5 +9,10 @@ anyhow.workspace = true
 indexmap.workspace = true
 
 [dev-dependencies]
+criterion.workspace = true
 indoc.workspace = true
 pretty_assertions.workspace = true
+
+[[bench]]
+name = "day_03_bench"
+harness = false
