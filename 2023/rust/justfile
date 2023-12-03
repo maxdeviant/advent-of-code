@@ -1,0 +1,2 @@
+flamegraph day:
+    cargo flamegraph --profile flamegraph --root --package {{day}} --output days/{{day}}/flamegraph.svg
