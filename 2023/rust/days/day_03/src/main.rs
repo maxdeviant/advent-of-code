@@ -149,6 +149,8 @@ impl Schematic {
     }
 
     pub fn gear_ratios(&self) -> Vec<usize> {
+        let spanned_part_numbers = self.spanned_part_numbers();
+
         self.symbols_by_coordinates
             .iter()
             .filter_map(|(coords, char)| {
@@ -156,9 +158,8 @@ impl Schematic {
                     return None;
                 }
 
-                let adjacent_part_numbers = self
-                    .spanned_part_numbers()
-                    .into_iter()
+                let mut adjacent_part_numbers = spanned_part_numbers
+                    .iter()
                     .filter_map(|(part_number, span)| {
                         if span.adjacent_to(*coords) {
                             return Some(part_number);
@@ -166,16 +167,16 @@ impl Schematic {
 
                         None
                     })
-                    .collect::<Vec<_>>();
+                    .take(3);
 
-                if adjacent_part_numbers.len() != 2 {
-                    return None;
+                match (
+                    adjacent_part_numbers.next(),
+                    adjacent_part_numbers.next(),
+                    adjacent_part_numbers.next(),
+                ) {
+                    (Some(first), Some(second), None) => Some(first.0 * second.0),
+                    _ => None,
                 }
-
-                let part_number_one = adjacent_part_numbers[0];
-                let part_number_two = adjacent_part_numbers[1];
-
-                Some(part_number_one.0 * part_number_two.0)
             })
             .collect()
     }
