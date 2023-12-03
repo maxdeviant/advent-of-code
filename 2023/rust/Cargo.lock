@@ -4,8 +4,9 @@ version = 3
 
 [[package]]
 name = "adventurous"
-version = "0.2.0"
-source = "git+https://github.com/maxdeviant/adventurous.git?rev=8939e133a3382fd4b343c9e06619e9a7d3f035b2#8939e133a3382fd4b343c9e06619e9a7d3f035b2"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d818836ee1855515a3714efae4a26f502f00b1536c004bbf5e5c2ce70653336b"
 dependencies = [
  "adventurous_macros",
  "anyhow",
@@ -14,8 +15,9 @@ dependencies = [
 
 [[package]]
 name = "adventurous_macros"
-version = "0.1.0"
-source = "git+https://github.com/maxdeviant/adventurous.git?rev=8939e133a3382fd4b343c9e06619e9a7d3f035b2#8939e133a3382fd4b343c9e06619e9a7d3f035b2"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a7b0a5a0dbde937138f0e9344dd6507641dc3c160f91a3257dbcd57d0156de6"
 dependencies = [
  "proc-macro2",
  "quote",
