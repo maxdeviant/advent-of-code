@@ -15,7 +15,7 @@ impl Glyph {
     pub fn parse(char: char) -> Self {
         match char {
             '.' => Glyph::Dot,
-            char if char.is_digit(10) => Glyph::Digit(char),
+            char if char.is_ascii_digit() => Glyph::Digit(char),
             char => Glyph::Symbol(char),
         }
     }
@@ -140,8 +140,7 @@ impl Schematic {
                 let is_adjacent_to_symbol = self
                     .symbols_by_coordinates
                     .keys()
-                    .find(|symbol_coords| span.adjacent_to(**symbol_coords))
-                    .is_some();
+                    .any(|symbol_coords| span.adjacent_to(*symbol_coords));
 
                 Some((PartNumber(number), span)).filter(|_| is_adjacent_to_symbol)
             })
@@ -184,14 +183,14 @@ impl Schematic {
 
 #[adventurous::part_one(answer = "535078")]
 fn part_one(input: &Input) -> Result<usize> {
-    let schematic = Schematic::parse(&input);
+    let schematic = Schematic::parse(input);
 
     Ok(schematic.part_numbers().sum())
 }
 
 #[adventurous::part_two(answer = "75312571")]
 fn part_two(input: &Input) -> Result<usize> {
-    let schematic = Schematic::parse(&input);
+    let schematic = Schematic::parse(input);
     let gear_ratios = schematic.gear_ratios();
 
     Ok(gear_ratios.into_iter().sum())
