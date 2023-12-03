@@ -53,7 +53,7 @@ impl DigitLocator {
         };
 
         for char in chars {
-            if char.is_digit(10) {
+            if char.is_ascii_digit() {
                 return Some(char);
             }
 
@@ -89,10 +89,8 @@ impl DigitLocator {
 }
 
 fn parse_calibration_value(digit_locator: &DigitLocator, line: &str) -> Result<i32> {
-    let first_digit = digit_locator
-        .first(&line)
-        .ok_or(anyhow!("no first digit"))?;
-    let last_digit = digit_locator.last(&line).ok_or(anyhow!("no last digit"))?;
+    let first_digit = digit_locator.first(line).ok_or(anyhow!("no first digit"))?;
+    let last_digit = digit_locator.last(line).ok_or(anyhow!("no last digit"))?;
 
     Ok(format!("{first_digit}{last_digit}").parse::<i32>()?)
 }
@@ -183,12 +181,12 @@ mod tests {
 
         for (input, expected_first, expected_last) in cases {
             assert_eq!(
-                locator.first(&input),
+                locator.first(input),
                 Some(expected_first),
                 "no first digit found for '{input}'"
             );
             assert_eq!(
-                locator.last(&input),
+                locator.last(input),
                 Some(expected_last),
                 "no last digit found for '{input}'"
             );
