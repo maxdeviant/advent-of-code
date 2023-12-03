@@ -1,7 +1,7 @@
 use adventurous::Input;
 use anyhow::Result;
 
-use day_03::{part_one, part_two};
+use day_02::{part_one, part_two};
 
 fn main() {
     divan::main();

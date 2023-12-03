@@ -8,5 +8,11 @@ adventurous.workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]
+divan.workspace = true
 indoc.workspace = true
 pretty_assertions.workspace = true
+
+[[bench]]
+name = "day_01"
+path = "benches/day_01_bench.rs"
+harness = false

@@ -9,10 +9,11 @@ anyhow.workspace = true
 indexmap.workspace = true
 
 [dev-dependencies]
-criterion.workspace = true
+divan.workspace = true
 indoc.workspace = true
 pretty_assertions.workspace = true
 
 [[bench]]
-name = "day_03_bench"
+name = "day_03"
+path = "benches/day_03_bench.rs"
 harness = false

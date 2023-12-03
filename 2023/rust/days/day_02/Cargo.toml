@@ -10,5 +10,11 @@ enum-map.workspace = true
 nom.workspace = true
 
 [dev-dependencies]
+divan.workspace = true
 indoc.workspace = true
 pretty_assertions.workspace = true
+
+[[bench]]
+name = "day_02"
+path = "benches/day_02_bench.rs"
+harness = false
