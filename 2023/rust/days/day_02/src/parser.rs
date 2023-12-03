@@ -39,7 +39,7 @@ fn cube(input: &str) -> IResult<&str, Cube> {
 
 fn cube_pair(input: &str) -> IResult<&str, (Cube, usize)> {
     let (input, count) = map_res(
-        whitespace(take_till(|char: char| !char.is_digit(10))),
+        whitespace(take_till(|char: char| !char.is_ascii_digit())),
         |char| char.parse::<usize>(),
     )(input)?;
     let (input, cube) = cube(input)?;

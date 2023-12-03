@@ -40,11 +40,7 @@ impl Game {
 
     fn possibility(&self, cube_counts: &EnumMap<Cube, usize>) -> GamePossibility {
         for set in &self.sets {
-            if set
-                .iter()
-                .find(|(cube, count)| *count > cube_counts[*cube])
-                .is_some()
-            {
+            if set.iter().any(|(cube, count)| *count > cube_counts[*cube]) {
                 return GamePossibility::Impossible;
             }
         }
