@@ -20,36 +20,74 @@ impl Glyph {
     }
 }
 
-fn parse_glyphs_with_coordinates(input: &Input) -> Vec<((usize, usize), Glyph)> {
-    input
-        .lines()
-        .enumerate()
-        .flat_map(|(y, line)| {
-            line.chars()
-                .map(Glyph::parse)
-                .enumerate()
-                .map(move |(x, glyph)| ((x, y), glyph))
-        })
-        .collect()
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+struct Point {
+    pub x: usize,
+    pub y: usize,
 }
 
-fn are_adjacent((x1, y1): (usize, usize), (x2, y2): (usize, usize)) -> bool {
-    let dx = (x1 as isize - x2 as isize).abs();
-    let dy = (y1 as isize - y2 as isize).abs();
+impl Point {
+    pub fn xy(x: usize, y: usize) -> Self {
+        Self { x, y }
+    }
 
-    dx <= 1 && dy <= 1
+    pub fn adjacent_to(&self, other: Point) -> bool {
+        let dx = (self.x as isize - other.x as isize).abs();
+        let dy = (self.y as isize - other.y as isize).abs();
+
+        dx <= 1 && dy <= 1
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+struct Span {
+    pub lo: Point,
+    pub hi: Point,
+}
+
+impl Span {
+    pub fn new(lo: Point, hi: Point) -> Self {
+        Self { lo, hi }
+    }
+
+    pub fn adjacent_to(&self, point: Point) -> bool {
+        self.lo.adjacent_to(point) || self.hi.adjacent_to(point)
+    }
+}
+
+struct Schematic {
+    glyphs_with_coordinates: Vec<(Point, Glyph)>,
+}
+
+impl Schematic {
+    pub fn parse(input: &Input) -> Self {
+        let glyphs_with_coordinates = input
+            .lines()
+            .enumerate()
+            .flat_map(|(y, line)| {
+                line.chars()
+                    .map(Glyph::parse)
+                    .enumerate()
+                    .map(move |(x, glyph)| (Point::xy(x, y), glyph))
+            })
+            .collect();
+
+        Self {
+            glyphs_with_coordinates,
+        }
+    }
 }
 
 #[adventurous::part_one(answer = "535078")]
 fn part_one(input: &Input) -> Result<usize> {
-    let glyphs_with_coordinates = parse_glyphs_with_coordinates(&input);
+    let schematic = Schematic::parse(&input);
 
     let mut spanned_numbers = Vec::new();
     let mut current_number = Vec::new();
 
-    for ((x, y), glyph) in &glyphs_with_coordinates {
+    for (coords, glyph) in &schematic.glyphs_with_coordinates {
         if let Glyph::Digit(digit) = glyph {
-            current_number.push(((x, y), digit));
+            current_number.push((coords, digit));
             continue;
         }
 
@@ -57,7 +95,7 @@ fn part_one(input: &Input) -> Result<usize> {
             continue;
         }
 
-        let (coords, digits): (Vec<_>, Vec<&char>) = current_number.clone().into_iter().unzip();
+        let (coords, digits): (Vec<Point>, Vec<&char>) = current_number.clone().into_iter().unzip();
 
         let part_number = digits
             .into_iter()
@@ -65,15 +103,16 @@ fn part_one(input: &Input) -> Result<usize> {
             .parse::<usize>()
             .unwrap();
 
-        let lo = coords.iter().min().cloned().map(|(x, y)| (*x, *y)).unwrap();
-        let hi = coords.iter().max().cloned().map(|(x, y)| (*x, *y)).unwrap();
+        let lo = coords.iter().min().cloned().unwrap();
+        let hi = coords.iter().max().cloned().unwrap();
 
-        spanned_numbers.push((part_number, (lo, hi)));
+        spanned_numbers.push((part_number, Span::new(lo, hi)));
 
         current_number.clear();
     }
 
-    let symbol_coordinates = glyphs_with_coordinates
+    let symbol_coordinates = schematic
+        .glyphs_with_coordinates
         .iter()
         .filter_map(|(coords, glyph)| match glyph {
             Glyph::Symbol(_) => Some(*coords),
@@ -81,18 +120,14 @@ fn part_one(input: &Input) -> Result<usize> {
         })
         .collect::<HashSet<_>>();
 
-    let part_numbers = spanned_numbers
-        .into_iter()
-        .filter_map(|(number, (lo, hi))| {
-            let is_adjacent_to_symbol = symbol_coordinates
-                .iter()
-                .find(|symbol_coords| {
-                    are_adjacent(lo, **symbol_coords) || are_adjacent(hi, **symbol_coords)
-                })
-                .is_some();
+    let part_numbers = spanned_numbers.into_iter().filter_map(|(number, span)| {
+        let is_adjacent_to_symbol = symbol_coordinates
+            .iter()
+            .find(|symbol_coords| span.adjacent_to(**symbol_coords))
+            .is_some();
 
-            Some(number).filter(|_| is_adjacent_to_symbol)
-        });
+        Some(number).filter(|_| is_adjacent_to_symbol)
+    });
 
     Ok(part_numbers.sum())
 }
