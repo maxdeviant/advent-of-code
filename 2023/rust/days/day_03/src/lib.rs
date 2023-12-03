@@ -125,25 +125,26 @@ impl Schematic {
                 .parse::<usize>()
                 .unwrap();
 
-            let lo = coords.iter().min().copied().unwrap();
-            let hi = coords.iter().max().copied().unwrap();
+            let span = {
+                let lo = coords.iter().min().copied().unwrap();
+                let hi = coords.iter().max().copied().unwrap();
 
-            spanned_numbers.push((part_number, Span::new(lo, hi)));
+                Span::new(lo, hi)
+            };
+
+            let is_adjacent_to_symbol = self
+                .symbols_by_coordinates
+                .keys()
+                .any(|symbol_coords| span.adjacent_to(*symbol_coords));
+
+            if is_adjacent_to_symbol {
+                spanned_numbers.push((PartNumber(part_number), span));
+            }
 
             current_number.clear();
         }
 
         spanned_numbers
-            .into_iter()
-            .filter_map(move |(number, span)| {
-                let is_adjacent_to_symbol = self
-                    .symbols_by_coordinates
-                    .keys()
-                    .any(|symbol_coords| span.adjacent_to(*symbol_coords));
-
-                Some((PartNumber(number), span)).filter(|_| is_adjacent_to_symbol)
-            })
-            .collect()
     }
 
     pub fn gear_ratios(&self) -> Vec<usize> {
