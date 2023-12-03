@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 adventurous.workspace = true
 anyhow.workspace = true
+indexmap.workspace = true
 
 [dev-dependencies]
 indoc.workspace = true
