@@ -76,6 +76,7 @@ impl Game {
     }
 }
 
+#[adventurous::part_one(answer = "1853")]
 fn part_one(input: &Input) -> Result<usize> {
     let cube_counts = enum_map! {
         Red => 12,
@@ -90,6 +91,7 @@ fn part_one(input: &Input) -> Result<usize> {
         .sum())
 }
 
+#[adventurous::part_two(answer = "72706")]
 fn part_two(input: &Input) -> Result<usize> {
     Ok(input
         .traverse(Game::parse)?
@@ -103,14 +105,12 @@ fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use adventurous::{test_part_one_solution, test_part_two_solution};
     use indoc::indoc;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    test_part_one_solution!("input.txt", 1853);
-    test_part_two_solution!("input.txt", 72706);
+    adventurous::test_solutions!();
 
     #[test]
     fn test_part_one_sample_input() -> Result<()> {

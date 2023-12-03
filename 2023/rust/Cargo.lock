@@ -5,11 +5,21 @@ version = 3
 [[package]]
 name = "adventurous"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a598af3b86b10a8ff2a377a19af4c032f70160acfbbe7dd1736c519a59a4b2d"
+source = "git+https://github.com/maxdeviant/adventurous.git?rev=8939e133a3382fd4b343c9e06619e9a7d3f035b2#8939e133a3382fd4b343c9e06619e9a7d3f035b2"
 dependencies = [
+ "adventurous_macros",
  "anyhow",
  "pretty_assertions",
+]
+
+[[package]]
+name = "adventurous_macros"
+version = "0.1.0"
+source = "git+https://github.com/maxdeviant/adventurous.git?rev=8939e133a3382fd4b343c9e06619e9a7d3f035b2#8939e133a3382fd4b343c9e06619e9a7d3f035b2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

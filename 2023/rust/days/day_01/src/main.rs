@@ -97,6 +97,7 @@ fn parse_calibration_value(digit_locator: &DigitLocator, line: &str) -> Result<i
     Ok(format!("{first_digit}{last_digit}").parse::<i32>()?)
 }
 
+#[adventurous::part_one(answer = "54667")]
 fn part_one(input: &Input) -> Result<i32> {
     let digit_locator = DigitLocator::digits_only();
 
@@ -106,6 +107,7 @@ fn part_one(input: &Input) -> Result<i32> {
     Ok(calibration_values.sum())
 }
 
+#[adventurous::part_two(answer = "54203")]
 fn part_two(input: &Input) -> Result<i32> {
     let digit_locator = DigitLocator::digits_and_words();
 
@@ -121,14 +123,12 @@ fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use adventurous::{test_part_one_solution, test_part_two_solution};
     use indoc::indoc;
     use pretty_assertions::assert_eq;
 
     use super::*;
 
-    test_part_one_solution!("input.txt", 54667);
-    test_part_two_solution!("input.txt", 54203);
+    adventurous::test_solutions!();
 
     #[test]
     fn test_part_one_sample_input() -> Result<()> {
