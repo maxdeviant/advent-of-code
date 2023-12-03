@@ -1,2 +1,11 @@
+instruments template day:
+    cargo instruments --profile instruments --template "{{template}}" --bin {{day}}
+
+bench day:
+    cargo bench --quiet {{day}}
+
+bench-all:
+    cargo bench --quiet > benchmarks.txt
+
 flamegraph day:
     cargo flamegraph --profile flamegraph --root --package {{day}} --output days/{{day}}/flamegraph.svg
