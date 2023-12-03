@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::iter::Sum;
 
 use adventurous::Input;
@@ -28,8 +29,35 @@ struct Point {
 }
 
 impl Point {
+    const DIRECTIONS: [(isize, isize); 8] = [
+        (0, 1),
+        (1, 1),
+        (1, 0),
+        (1, -1),
+        (0, -1),
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+    ];
+
     pub fn xy(x: usize, y: usize) -> Self {
         Self { x, y }
+    }
+
+    pub fn neighbors(&self) -> Vec<Point> {
+        Self::DIRECTIONS
+            .iter()
+            .filter_map(|(dx, dy)| {
+                let x = self.x as isize + dx;
+                let y = self.y as isize + dy;
+
+                if x < 0 || y < 0 {
+                    return None;
+                }
+
+                Some(Point::xy(x as usize, y as usize))
+            })
+            .collect()
     }
 
     pub fn adjacent_to(&self, other: Point) -> bool {
@@ -104,6 +132,16 @@ impl Schematic {
     }
 
     fn spanned_part_numbers(&self) -> Vec<(PartNumber, Span)> {
+        let adjacent_to_symbols = self
+            .symbols_by_coordinates
+            .keys()
+            .flat_map(|symbol_coords| symbol_coords.neighbors())
+            .collect::<HashSet<_>>();
+
+        let is_adjacent_to_symbol = |span: Span| {
+            adjacent_to_symbols.contains(&span.lo) || adjacent_to_symbols.contains(&span.hi)
+        };
+
         let mut spanned_numbers = Vec::new();
         let mut current_number = Vec::new();
 
@@ -132,12 +170,7 @@ impl Schematic {
                 Span::new(lo, hi)
             };
 
-            let is_adjacent_to_symbol = self
-                .symbols_by_coordinates
-                .keys()
-                .any(|symbol_coords| span.adjacent_to(*symbol_coords));
-
-            if is_adjacent_to_symbol {
+            if is_adjacent_to_symbol(span) {
                 spanned_numbers.push((PartNumber(part_number), span));
             }
 
