@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 enum Glyph {
     Dot,
-    Digit(char),
+    Digit(usize),
     Symbol(char),
 }
 
@@ -16,7 +16,7 @@ impl Glyph {
     pub fn parse(char: char) -> Self {
         match char {
             '.' => Glyph::Dot,
-            char if char.is_ascii_digit() => Glyph::Digit(char),
+            char if char.is_ascii_digit() => Glyph::Digit(char.to_digit(10).unwrap() as usize),
             char => Glyph::Symbol(char),
         }
     }
@@ -88,6 +88,12 @@ impl Span {
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 pub struct PartNumber(usize);
 
+impl PartNumber {
+    pub fn from_digits(digits: &[usize]) -> Self {
+        Self(digits.iter().fold(0, |acc, digit| acc * 10 + digit))
+    }
+}
+
 impl Sum<PartNumber> for usize {
     fn sum<I: Iterator<Item = PartNumber>>(iter: I) -> Self {
         iter.fold(0, |acc, part_number| acc + part_number.0)
@@ -149,7 +155,7 @@ impl Schematic {
 
         for (coords, glyph) in &self.glyphs_by_coordinates {
             if let Glyph::Digit(digit) = glyph {
-                digits.push(digit);
+                digits.push(*digit);
                 span.lo = span.lo.min(*coords);
                 span.hi = span.hi.max(*coords);
 
@@ -161,14 +167,8 @@ impl Schematic {
             }
 
             if is_adjacent_to_symbol(span) {
-                let part_number = digits
-                    .iter()
-                    .copied()
-                    .collect::<String>()
-                    .parse::<usize>()
-                    .unwrap();
-
-                spanned_numbers.push((PartNumber(part_number), span));
+                let part_number = PartNumber::from_digits(&digits[..]);
+                spanned_numbers.push((part_number, span));
             }
 
             digits.clear();
