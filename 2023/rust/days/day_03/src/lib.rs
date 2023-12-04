@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 enum Glyph {
     Dot,
-    Digit(usize),
+    Digit(u8),
     Symbol(char),
 }
 
@@ -16,7 +16,7 @@ impl Glyph {
     pub fn parse(char: char) -> Self {
         match char {
             '.' => Glyph::Dot,
-            char if char.is_ascii_digit() => Glyph::Digit(char.to_digit(10).unwrap() as usize),
+            char if char.is_ascii_digit() => Glyph::Digit(char.to_digit(10).unwrap() as u8),
             char => Glyph::Symbol(char),
         }
     }
@@ -110,8 +110,12 @@ impl Span {
 pub struct PartNumber(usize);
 
 impl PartNumber {
-    pub fn from_digits(digits: &[usize]) -> Self {
-        Self(digits.iter().fold(0, |acc, digit| acc * 10 + digit))
+    pub fn from_digits(digits: &[u8]) -> Self {
+        Self(
+            digits
+                .iter()
+                .fold(0, |acc, digit| acc * 10 + *digit as usize),
+        )
     }
 }
 
