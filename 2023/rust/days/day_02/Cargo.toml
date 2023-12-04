@@ -3,9 +3,14 @@ name = "day_02"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+dhat-heap = ["dep:dhat"]
+
 [dependencies]
 adventurous.workspace = true
 anyhow.workspace = true
+dhat = { workspace = true, optional = true }
 enum-map.workspace = true
 nom.workspace = true
 

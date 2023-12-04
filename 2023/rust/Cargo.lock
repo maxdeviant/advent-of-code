@@ -137,6 +137,7 @@ version = "0.1.0"
 dependencies = [
  "adventurous",
  "anyhow",
+ "dhat",
  "divan",
  "indoc",
  "pretty_assertions",
@@ -148,6 +149,7 @@ version = "0.1.0"
 dependencies = [
  "adventurous",
  "anyhow",
+ "dhat",
  "divan",
  "enum-map",
  "indoc",
