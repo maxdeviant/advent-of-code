@@ -29,6 +29,31 @@ struct Point {
 }
 
 impl Point {
+    pub const fn xy(x: usize, y: usize) -> Self {
+        Self { x, y }
+    }
+
+    pub fn neighbors(&self) -> Neighbors {
+        Neighbors {
+            point: *self,
+            index: 0,
+        }
+    }
+
+    pub fn adjacent_to(&self, other: Point) -> bool {
+        let dx = (self.x as isize - other.x as isize).abs();
+        let dy = (self.y as isize - other.y as isize).abs();
+
+        dx <= 1 && dy <= 1
+    }
+}
+
+struct Neighbors {
+    point: Point,
+    index: usize,
+}
+
+impl Neighbors {
     const DIRECTIONS: [(isize, isize); 8] = [
         (0, 1),
         (1, 1),
@@ -39,32 +64,28 @@ impl Point {
         (-1, 0),
         (-1, 1),
     ];
+}
 
-    pub const fn xy(x: usize, y: usize) -> Self {
-        Self { x, y }
-    }
+impl Iterator for Neighbors {
+    type Item = Point;
 
-    pub fn neighbors(&self) -> Vec<Point> {
-        Self::DIRECTIONS
-            .iter()
-            .filter_map(|(dx, dy)| {
-                let x = self.x as isize + dx;
-                let y = self.y as isize + dy;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= Self::DIRECTIONS.len() {
+            return None;
+        }
 
-                if x < 0 || y < 0 {
-                    return None;
-                }
+        let (dx, dy) = Self::DIRECTIONS[self.index];
 
-                Some(Point::xy(x as usize, y as usize))
-            })
-            .collect()
-    }
+        self.index += 1;
 
-    pub fn adjacent_to(&self, other: Point) -> bool {
-        let dx = (self.x as isize - other.x as isize).abs();
-        let dy = (self.y as isize - other.y as isize).abs();
+        let x = self.point.x as isize + dx;
+        let y = self.point.y as isize + dy;
 
-        dx <= 1 && dy <= 1
+        if x < 0 || y < 0 {
+            return None;
+        }
+
+        Some(Point::xy(x as usize, y as usize))
     }
 }
 
