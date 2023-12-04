@@ -1,6 +1,9 @@
 instruments template day:
     cargo instruments --profile instruments --template "{{template}}" --bin {{day}}
 
+profile-heap day:
+    cargo run --profile dhat --package {{day}} --features dhat-heap
+
 bench day:
     cargo bench --quiet {{day}}
 

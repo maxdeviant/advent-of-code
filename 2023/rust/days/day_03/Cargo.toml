@@ -3,9 +3,14 @@ name = "day_03"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+dhat-heap = ["dep:dhat"]
+
 [dependencies]
 adventurous.workspace = true
 anyhow.workspace = true
+dhat = { workspace = true, optional = true }
 indexmap.workspace = true
 
 [dev-dependencies]
