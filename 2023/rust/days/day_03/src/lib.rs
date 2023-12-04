@@ -40,7 +40,7 @@ impl Point {
         (-1, 1),
     ];
 
-    pub fn xy(x: usize, y: usize) -> Self {
+    pub const fn xy(x: usize, y: usize) -> Self {
         Self { x, y }
     }
 
@@ -75,9 +75,10 @@ struct Span {
 }
 
 impl Span {
-    pub fn new(lo: Point, hi: Point) -> Self {
-        Self { lo, hi }
-    }
+    pub const EMPTY: Self = Self {
+        lo: Point::xy(usize::MAX, usize::MAX),
+        hi: Point::xy(0, 0),
+    };
 
     pub fn adjacent_to(&self, point: Point) -> bool {
         self.lo.adjacent_to(point) || self.hi.adjacent_to(point)
@@ -143,38 +144,35 @@ impl Schematic {
         };
 
         let mut spanned_numbers = Vec::new();
-        let mut current_number = Vec::new();
+        let mut digits = Vec::with_capacity(3);
+        let mut span = Span::EMPTY;
 
         for (coords, glyph) in &self.glyphs_by_coordinates {
             if let Glyph::Digit(digit) = glyph {
-                current_number.push((coords, digit));
+                digits.push(digit);
+                span.lo = span.lo.min(*coords);
+                span.hi = span.hi.max(*coords);
+
                 continue;
             }
 
-            if current_number.is_empty() {
+            if digits.is_empty() {
                 continue;
             }
-
-            let (coords, digits): (Vec<Point>, Vec<char>) = current_number.iter().copied().unzip();
-
-            let part_number = digits
-                .into_iter()
-                .collect::<String>()
-                .parse::<usize>()
-                .unwrap();
-
-            let span = {
-                let lo = coords.iter().min().copied().unwrap();
-                let hi = coords.iter().max().copied().unwrap();
-
-                Span::new(lo, hi)
-            };
 
             if is_adjacent_to_symbol(span) {
+                let part_number = digits
+                    .iter()
+                    .copied()
+                    .collect::<String>()
+                    .parse::<usize>()
+                    .unwrap();
+
                 spanned_numbers.push((PartNumber(part_number), span));
             }
 
-            current_number.clear();
+            digits.clear();
+            span = Span::EMPTY;
         }
 
         spanned_numbers
