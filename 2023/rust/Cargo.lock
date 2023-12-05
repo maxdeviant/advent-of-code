@@ -178,6 +178,7 @@ dependencies = [
  "anyhow",
  "dhat",
  "divan",
+ "indexmap",
  "indoc",
  "pretty_assertions",
 ]
