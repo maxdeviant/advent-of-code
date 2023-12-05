@@ -70,6 +70,7 @@ impl Card {
 }
 
 fn count_copies(
+    copies_by_card: &mut IndexMap<CardId, usize>,
     matches_by_card: &HashMap<CardId, usize>,
     max_card_id: CardId,
     card_id: CardId,
@@ -84,7 +85,12 @@ fn count_copies(
             break;
         }
 
-        total_copies += count_copies(matches_by_card, max_card_id, copy_id);
+        let copies = copies_by_card
+            .get(&copy_id)
+            .copied()
+            .unwrap_or_else(|| count_copies(copies_by_card, matches_by_card, max_card_id, copy_id));
+
+        total_copies += copies;
     }
 
     1 + total_copies
@@ -113,10 +119,15 @@ pub fn part_two(input: &Input) -> Result<usize> {
         .map(|card| (card.id, card.matches()))
         .collect::<HashMap<_, _>>();
 
-    Ok(cards
-        .values()
-        .map(|card| count_copies(&matches_by_card, max_card_id, card.id))
-        .sum())
+    let mut copies_by_card = IndexMap::new();
+
+    for card in cards.values().rev() {
+        let copies = count_copies(&mut copies_by_card, &matches_by_card, max_card_id, card.id);
+
+        copies_by_card.insert(card.id, copies);
+    }
+
+    Ok(copies_by_card.values().sum())
 }
 
 #[cfg(test)]
