@@ -1,7 +1,5 @@
 mod parser;
 
-use std::collections::HashMap;
-
 use adventurous::Input;
 use anyhow::{anyhow, Result};
 use indexmap::IndexMap;
@@ -43,7 +41,7 @@ impl Almanac {
     }
 }
 
-#[adventurous::part_one]
+#[adventurous::part_one(answer = "318728750")]
 pub fn part_one(input: &Input) -> Result<usize> {
     let almanac = Almanac::parse(input)?;
 
@@ -57,33 +55,27 @@ pub fn part_one(input: &Input) -> Result<usize> {
         "humidity-to-location map",
     ];
 
-    let mut mappings = IndexMap::new();
-
-    for map in almanac.maps.values() {
-        let mut mapping = HashMap::new();
-
-        for range in &map.ranges {
-            let source_range = range.source_start..range.source_start + range.length;
-            let destination_range = range.destination_start..range.destination_start + range.length;
-
-            for (source, destination) in source_range.zip(destination_range) {
-                mapping.insert(source, destination);
-            }
-        }
-
-        mappings.insert(map.name.as_str(), mapping);
-    }
-
     let mut locations = Vec::new();
 
     for seed in almanac.seeds {
         let mut number = seed.0;
 
         for map_name in chain {
-            let map = mappings.get(&map_name).unwrap();
+            let map = almanac.maps.get(map_name).unwrap();
 
-            if let Some(mapped) = map.get(&number) {
-                number = *mapped;
+            if let Some(range) = map.ranges.iter().find(|range| {
+                (range.source_start..range.source_start + range.length).contains(&number)
+            }) {
+                let source_range = range.source_start..range.source_start + range.length;
+                let destination_range =
+                    range.destination_start..range.destination_start + range.length;
+
+                for (source, destination) in source_range.zip(destination_range) {
+                    if source == number {
+                        number = destination;
+                        break;
+                    }
+                }
             }
         }
 
