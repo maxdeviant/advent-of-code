@@ -193,6 +193,7 @@ dependencies = [
  "divan",
  "indexmap",
  "indoc",
+ "nom",
  "pretty_assertions",
 ]
 
