@@ -17,6 +17,15 @@ struct MapRange {
     pub length: usize,
 }
 
+impl MapRange {
+    pub fn translate(&self, n: usize) -> usize {
+        let position_in_range = n - self.source_start;
+        let destination = self.destination_start + position_in_range;
+
+        destination
+    }
+}
+
 #[derive(Debug)]
 struct Map {
     pub name: String,
@@ -66,16 +75,7 @@ pub fn part_one(input: &Input) -> Result<usize> {
             if let Some(range) = map.ranges.iter().find(|range| {
                 (range.source_start..range.source_start + range.length).contains(&number)
             }) {
-                let source_range = range.source_start..range.source_start + range.length;
-                let destination_range =
-                    range.destination_start..range.destination_start + range.length;
-
-                for (source, destination) in source_range.zip(destination_range) {
-                    if source == number {
-                        number = destination;
-                        break;
-                    }
-                }
+                number = range.translate(number);
             }
         }
 
