@@ -1,0 +1,24 @@
+[package]
+name = "day_05"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+dhat-heap = ["dep:dhat"]
+
+[dependencies]
+adventurous.workspace = true
+anyhow.workspace = true
+dhat = { workspace = true, optional = true }
+indexmap.workspace = true
+
+[dev-dependencies]
+divan.workspace = true
+indoc.workspace = true
+pretty_assertions.workspace = true
+
+[[bench]]
+name = "day_05"
+path = "benches/day_05_bench.rs"
+harness = false
