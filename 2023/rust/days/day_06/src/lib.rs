@@ -55,6 +55,29 @@ fn parse_races(input: &Input) -> Result<Vec<Race>> {
         .collect())
 }
 
+fn parse_single_race(input: &Input) -> Result<Race> {
+    fn parse_number(input: &str) -> Result<usize, ParseIntError> {
+        input
+            .split(" ")
+            .map(|str| str.trim())
+            .collect::<Vec<_>>()
+            .join("")
+            .parse::<usize>()
+    }
+
+    let mut lines = input.lines();
+    let time = lines.next().ok_or_else(|| anyhow!("missing time"))?;
+    let distance = lines.next().ok_or_else(|| anyhow!("missing distance"))?;
+
+    let time = parse_number(&time.replace("Time:", ""))?;
+    let record_distance = parse_number(&distance.replace("Distance:", ""))?;
+
+    Ok(Race {
+        time,
+        record_distance,
+    })
+}
+
 #[adventurous::part_one(answer = "440000")]
 pub fn part_one(input: &Input) -> Result<usize> {
     let races = parse_races(input)?;
@@ -65,9 +88,11 @@ pub fn part_one(input: &Input) -> Result<usize> {
         .fold(1, |acc, ways| acc * ways))
 }
 
-#[adventurous::part_two]
+#[adventurous::part_two(answer = "26187338")]
 pub fn part_two(input: &Input) -> Result<usize> {
-    todo!()
+    let race = parse_single_race(input)?;
+
+    Ok(race.ways_to_win())
 }
 
 #[cfg(test)]
@@ -87,6 +112,18 @@ mod tests {
         "};
 
         assert_eq!(part_one(&Input::new(input.to_string()))?, 288);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_part_two_sample_input() -> Result<()> {
+        let input = indoc! {"
+            Time:      7  15   30
+            Distance:  9  40  200
+        "};
+
+        assert_eq!(part_two(&Input::new(input.to_string()))?, 71503);
 
         Ok(())
     }
