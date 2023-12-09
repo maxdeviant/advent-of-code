@@ -1,8 +1,8 @@
 use std::cmp::Ordering;
-use std::collections::HashMap;
 
 use adventurous::Input;
 use anyhow::{anyhow, bail, Result};
+use indexmap::IndexMap;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 enum Card {
@@ -19,15 +19,25 @@ enum Card {
     Four = 4,
     Three = 3,
     Two = 2,
+    Joker = 1,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+enum JMeans {
+    Jack,
+    Joker,
 }
 
 impl Card {
-    pub fn parse(char: char) -> Result<Self> {
+    pub fn parse(char: char, j_means: JMeans) -> Result<Self> {
         match char {
             'A' => Ok(Self::Ace),
             'K' => Ok(Self::King),
             'Q' => Ok(Self::Queen),
-            'J' => Ok(Self::Jack),
+            'J' => Ok(match j_means {
+                JMeans::Jack => Self::Jack,
+                JMeans::Joker => Self::Joker,
+            }),
             'T' => Ok(Self::Ten),
             '9' => Ok(Self::Nine),
             '8' => Ok(Self::Eight),
@@ -61,7 +71,7 @@ struct Hand {
 impl Hand {
     const HAND_SIZE: usize = 5;
 
-    pub fn parse_with_bid(input: &str) -> Result<(Self, usize)> {
+    pub fn parse_with_bid(input: &str, j_means: JMeans) -> Result<(Self, usize)> {
         let mut parts = input.split(' ');
 
         let cards = parts
@@ -72,7 +82,7 @@ impl Hand {
         let cards = cards
             .trim()
             .chars()
-            .map(Card::parse)
+            .map(|char| Card::parse(char, j_means))
             .collect::<Result<Vec<_>, _>>()?;
         let bid = bid.trim().parse::<usize>()?;
 
@@ -86,12 +96,15 @@ impl Hand {
     }
 
     pub fn ty(&self) -> HandType {
-        let mut card_counts = HashMap::new();
+        let mut card_counts = IndexMap::new();
 
         for card in &self.cards {
             *card_counts.entry(card).or_insert(0) += 1;
         }
 
+        card_counts.sort_by(|_, a, _, b| b.cmp(a));
+
+        let mut jokers = card_counts.get(&Card::Joker).copied().unwrap_or(0);
         let mut three_of_a_kind = false;
         let mut pairs = 0;
 
@@ -100,20 +113,35 @@ impl Hand {
                 continue;
             };
 
-            if count == 5 {
+            let usable_jokers = match card {
+                Card::Joker => 0,
+                _ => jokers,
+            };
+
+            if count + usable_jokers >= 5 {
                 return HandType::FiveOfAKind;
             }
 
-            if count == 4 {
+            if count + usable_jokers >= 4 {
                 return HandType::FourOfAKind;
             }
 
-            if count == 3 {
+            if count + usable_jokers >= 3 {
+                let jokers_needed = 3 - count;
+                jokers -= jokers_needed;
+
                 three_of_a_kind = true;
+
+                continue;
             }
 
-            if count == 2 {
+            if count + usable_jokers >= 2 {
+                let jokers_needed = 2 - count;
+                jokers -= jokers_needed;
+
                 pairs += 1;
+
+                continue;
             }
         }
 
@@ -153,7 +181,9 @@ impl Ord for Hand {
 
 #[adventurous::part_one(answer = "248453531")]
 pub fn part_one(input: &Input) -> Result<usize> {
-    let hands = input.traverse(Hand::parse_with_bid)?.collect::<Vec<_>>();
+    let hands = input
+        .traverse(|line| Hand::parse_with_bid(line, JMeans::Jack))?
+        .collect::<Vec<_>>();
 
     let mut ranked_hands = hands;
     ranked_hands.sort_by(|(a, _), (b, _)| a.cmp(b));
@@ -166,9 +196,22 @@ pub fn part_one(input: &Input) -> Result<usize> {
         .sum())
 }
 
+// Not: 248834240
 #[adventurous::part_two]
 pub fn part_two(input: &Input) -> Result<usize> {
-    todo!()
+    let hands = input
+        .traverse(|line| Hand::parse_with_bid(line, JMeans::Joker))?
+        .collect::<Vec<_>>();
+
+    let mut ranked_hands = hands;
+    ranked_hands.sort_by(|(a, _), (b, _)| a.cmp(b));
+
+    Ok(ranked_hands
+        .into_iter()
+        .enumerate()
+        .map(|(index, pair)| (index + 1, pair))
+        .map(|(rank, (_, bid))| bid * rank)
+        .sum())
 }
 
 #[cfg(test)]
@@ -208,13 +251,16 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "not yet solved"]
     fn test_part_two_sample_input() -> Result<()> {
         let input = indoc! {"
-
+            32T3K 765
+            T55J5 684
+            KK677 28
+            KTJJT 220
+            QQQJA 483
         "};
 
-        assert_eq!(part_two(&Input::new(input.to_string()))?, 0);
+        assert_eq!(part_two(&Input::new(input.to_string()))?, 5905);
 
         Ok(())
     }

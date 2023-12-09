@@ -12,6 +12,7 @@ adventurous.workspace = true
 anyhow.workspace = true
 array-init.workspace = true
 dhat = { workspace = true, optional = true }
+indexmap.workspace = true
 
 [dev-dependencies]
 divan.workspace = true

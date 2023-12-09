@@ -225,6 +225,7 @@ dependencies = [
  "array-init",
  "dhat",
  "divan",
+ "indexmap",
  "indoc",
  "pretty_assertions",
 ]
