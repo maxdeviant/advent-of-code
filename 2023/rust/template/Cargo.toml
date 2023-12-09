@@ -1,0 +1,23 @@
+[package]
+name = "{{crate_name}}"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+dhat-heap = ["dep:dhat"]
+
+[dependencies]
+adventurous.workspace = true
+anyhow.workspace = true
+dhat = { workspace = true, optional = true }
+
+[dev-dependencies]
+divan.workspace = true
+indoc.workspace = true
+pretty_assertions.workspace = true
+
+[[bench]]
+name = "{{crate_name}}"
+path = "benches/{{crate_name}}_bench.rs"
+harness = false

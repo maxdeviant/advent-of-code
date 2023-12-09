@@ -12,3 +12,6 @@ bench-all:
 
 flamegraph day:
     cargo flamegraph --profile flamegraph --root --package {{day}} --output days/{{day}}/flamegraph.svg
+
+init day:
+    cargo generate --path ./template --name {{day}} --force --destination $(realpath ./days)
