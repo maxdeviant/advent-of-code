@@ -10,6 +10,7 @@ dhat-heap = ["dep:dhat"]
 [dependencies]
 adventurous.workspace = true
 anyhow.workspace = true
+array-init.workspace = true
 dhat = { workspace = true, optional = true }
 
 [dev-dependencies]
