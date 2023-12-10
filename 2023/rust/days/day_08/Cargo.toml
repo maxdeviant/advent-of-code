@@ -11,7 +11,9 @@ dhat-heap = ["dep:dhat"]
 adventurous.workspace = true
 anyhow.workspace = true
 dhat = { workspace = true, optional = true }
+indexmap.workspace = true
 nom.workspace = true
+num.workspace = true
 
 [dev-dependencies]
 divan.workspace = true

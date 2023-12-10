@@ -1,11 +1,11 @@
 mod parser;
 
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::fmt::Display;
 
 use adventurous::Input;
 use anyhow::{anyhow, Result};
+use indexmap::IndexMap;
 use nom::Finish;
 
 use crate::parser::parse_map;
@@ -70,9 +70,28 @@ impl From<String> for Node {
     }
 }
 
+trait IsEndNode {
+    fn is_end(&self, node: &Node) -> bool;
+}
+
+impl IsEndNode for &Node {
+    fn is_end(&self, node: &Node) -> bool {
+        *self == node
+    }
+}
+
+impl<F> IsEndNode for F
+where
+    F: Fn(&Node) -> bool,
+{
+    fn is_end(&self, node: &Node) -> bool {
+        self(node)
+    }
+}
+
 #[derive(Debug)]
 struct Network {
-    pub nodes: HashMap<Node, (Node, Node)>,
+    pub nodes: IndexMap<Node, (Node, Node)>,
 }
 
 impl Network {
@@ -81,12 +100,34 @@ impl Network {
 
         let (left, right) = self
             .nodes
-            .get(&location)
+            .get(location)
             .ok_or_else(|| anyhow!("location not found: {location}"))?;
 
         match instruction {
             Left => Ok(left),
             Right => Ok(right),
+        }
+    }
+
+    pub fn navigate_to_end(
+        &self,
+        start: &Node,
+        end: impl IsEndNode,
+        instructions: &mut InstructionList,
+    ) -> Result<usize> {
+        let mut steps = 0;
+        let mut location = start;
+
+        loop {
+            let instruction = instructions.next().unwrap();
+
+            location = self.navigate(location, instruction)?;
+
+            steps += 1;
+
+            if end.is_end(&location) {
+                return Ok(steps);
+            }
         }
     }
 }
@@ -114,46 +155,32 @@ pub fn part_one(input: &Input) -> Result<usize> {
     let map = Map::parse(input)?;
 
     let mut instructions = InstructionList::from_iter(map.instructions);
-    let mut location = &Node::START;
-    let mut steps = 0;
 
-    while location != &Node::END {
-        let instruction = instructions.next().unwrap();
-
-        location = map.network.navigate(location, instruction)?;
-
-        steps += 1;
-    }
-
-    Ok(steps)
+    map.network
+        .navigate_to_end(&Node::START, &Node::END, &mut instructions)
 }
 
-#[adventurous::part_two]
+#[adventurous::part_two(answer = "11283670395017")]
 pub fn part_two(input: &Input) -> Result<usize> {
     let map = Map::parse(input)?;
+    let mut instructions = InstructionList::from_iter(map.instructions);
 
     let start_nodes = map.network.nodes.keys().filter(|node| node.ends_with('A'));
 
-    let mut instructions = InstructionList::from_iter(map.instructions);
-    let mut locations = start_nodes.clone().collect::<Vec<_>>();
-    let mut steps = 0;
+    let steps_to_end = start_nodes
+        .map(|start_node| {
+            map.network.navigate_to_end(
+                &start_node,
+                |node: &Node| node.ends_with('Z'),
+                &mut instructions,
+            )
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
-    loop {
-        let instruction = instructions.next().unwrap();
-
-        for location in &mut locations {
-            *location = map.network.navigate(location, instruction)?;
-        }
-
-        steps += 1;
-
-        let all_ghosts_at_end = locations.iter().all(|node| node.ends_with('Z'));
-        if all_ghosts_at_end {
-            break;
-        }
-    }
-
-    Ok(steps)
+    steps_to_end
+        .into_iter()
+        .reduce(num::integer::lcm)
+        .ok_or_else(|| anyhow!("no overlap between ghosts"))
 }
 
 #[cfg(test)]

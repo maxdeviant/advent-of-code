@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use indexmap::IndexMap;
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{alphanumeric1, multispace0, newline, space0};
@@ -46,7 +45,7 @@ fn network(input: &str) -> IResult<&str, Network> {
     Ok((
         input,
         Network {
-            nodes: HashMap::from_iter(entries),
+            nodes: IndexMap::from_iter(entries),
         },
     ))
 }
