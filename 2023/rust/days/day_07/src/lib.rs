@@ -99,7 +99,12 @@ impl CardCounts {
         let mut jokers = self.jokers;
 
         for (card, count) in &self.counts {
-            if count + jokers >= n {
+            let usable_jokers = match card {
+                Card::Joker => 0,
+                _ => jokers,
+            };
+
+            if count + usable_jokers >= n {
                 let jokers_needed = n - count;
                 jokers -= jokers_needed;
 
@@ -232,10 +237,7 @@ pub fn part_one(input: &Input) -> Result<usize> {
         .sum())
 }
 
-// Not: 249299342 (too high)
-// Not: 249050660
-// Not: 248834240 (too high)
-#[adventurous::part_two]
+#[adventurous::part_two(answer = "248781813")]
 pub fn part_two(input: &Input) -> Result<usize> {
     let hands = input
         .traverse(|line| Hand::parse_with_bid(line, JMeans::Joker))?
