@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use nom::branch::alt;
 use nom::bytes::complete::tag;
-use nom::character::complete::{alpha1, multispace0, newline, space0};
+use nom::character::complete::{alphanumeric1, multispace0, newline, space0};
 use nom::combinator::{map, opt};
 use nom::error::ParseError;
 use nom::multi::many1;
@@ -25,7 +25,7 @@ fn spaces<'a, O, E: ParseError<&'a str>>(
 }
 
 fn node(input: &str) -> IResult<&str, Node> {
-    map(alpha1, |str: &str| Node::from(str.to_string()))(input)
+    map(alphanumeric1, |str: &str| Node::from(str.to_string()))(input)
 }
 
 fn network_entry(input: &str) -> IResult<&str, (Node, (Node, Node))> {

@@ -52,6 +52,10 @@ impl Node {
     pub const fn from_str(value: &'static str) -> Self {
         Self(Cow::Borrowed(value))
     }
+
+    pub fn ends_with(&self, char: char) -> bool {
+        self.0.ends_with(char)
+    }
 }
 
 impl Display for Node {
@@ -126,7 +130,30 @@ pub fn part_one(input: &Input) -> Result<usize> {
 
 #[adventurous::part_two]
 pub fn part_two(input: &Input) -> Result<usize> {
-    todo!()
+    let map = Map::parse(input)?;
+
+    let start_nodes = map.network.nodes.keys().filter(|node| node.ends_with('A'));
+
+    let mut instructions = InstructionList::from_iter(map.instructions);
+    let mut locations = start_nodes.clone().collect::<Vec<_>>();
+    let mut steps = 0;
+
+    loop {
+        let instruction = instructions.next().unwrap();
+
+        for location in &mut locations {
+            *location = map.network.navigate(location, instruction)?;
+        }
+
+        steps += 1;
+
+        let all_ghosts_at_end = locations.iter().all(|node| node.ends_with('Z'));
+        if all_ghosts_at_end {
+            break;
+        }
+    }
+
+    Ok(steps)
 }
 
 #[cfg(test)]
@@ -173,13 +200,21 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "not yet solved"]
     fn test_part_two_sample_input() -> Result<()> {
         let input = indoc! {"
+            LR
 
+            11A = (11B, XXX)
+            11B = (XXX, 11Z)
+            11Z = (11B, XXX)
+            22A = (22B, XXX)
+            22B = (22C, 22C)
+            22C = (22Z, 22Z)
+            22Z = (22B, 22B)
+            XXX = (XXX, XXX)
         "};
 
-        assert_eq!(part_two(&Input::new(input.to_string()))?, 0);
+        assert_eq!(part_two(&Input::new(input.to_string()))?, 6);
 
         Ok(())
     }
