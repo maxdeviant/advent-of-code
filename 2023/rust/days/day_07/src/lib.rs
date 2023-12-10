@@ -52,6 +52,71 @@ impl Card {
     }
 }
 
+#[derive(Debug)]
+struct CardCounts {
+    counts: IndexMap<Card, i32>,
+    jokers: i32,
+}
+
+impl CardCounts {
+    pub fn new(cards: impl Iterator<Item = Card>) -> Self {
+        let mut counts = IndexMap::new();
+
+        for card in cards {
+            *counts.entry(card).or_insert(0) += 1;
+        }
+
+        let jokers = counts.get(&Card::Joker).copied().unwrap_or(0);
+
+        Self { counts, jokers }
+    }
+
+    pub fn five_of_a_kind(&self) -> Option<Self> {
+        self.n_of_a_kind(5)
+    }
+
+    pub fn four_of_a_kind(&self) -> Option<Self> {
+        self.n_of_a_kind(4)
+    }
+
+    pub fn full_house(&self) -> Option<Self> {
+        self.three_of_a_kind()?.one_pair()
+    }
+
+    pub fn three_of_a_kind(&self) -> Option<Self> {
+        self.n_of_a_kind(3)
+    }
+
+    pub fn two_pair(&self) -> Option<Self> {
+        self.one_pair()?.one_pair()
+    }
+
+    pub fn one_pair(&self) -> Option<Self> {
+        self.n_of_a_kind(2)
+    }
+
+    fn n_of_a_kind(&self, n: i32) -> Option<Self> {
+        let mut jokers = self.jokers;
+
+        for (card, count) in &self.counts {
+            if count + jokers >= n {
+                let jokers_needed = n - count;
+                jokers -= jokers_needed;
+
+                let mut counts = self.counts.clone();
+                *counts.get_mut(card).unwrap() -= n - jokers_needed;
+                if let Some(joker_count) = counts.get_mut(&Card::Joker) {
+                    *joker_count -= jokers_needed;
+                }
+
+                return Some(Self { counts, jokers });
+            }
+        }
+
+        None
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 enum HandType {
     FiveOfAKind = 6,
@@ -96,62 +161,33 @@ impl Hand {
     }
 
     pub fn ty(&self) -> HandType {
-        let mut card_counts = IndexMap::new();
+        let counts = CardCounts::new(self.cards.iter().copied());
 
-        for card in &self.cards {
-            *card_counts.entry(card).or_insert(0) += 1;
+        if counts.five_of_a_kind().is_some() {
+            return HandType::FiveOfAKind;
         }
 
-        card_counts.sort_by(|_, a, _, b| b.cmp(a));
-
-        let mut jokers = card_counts.get(&Card::Joker).copied().unwrap_or(0);
-        let mut three_of_a_kind = false;
-        let mut pairs = 0;
-
-        for card in card_counts.keys() {
-            let Some(count) = card_counts.get(card).copied() else {
-                continue;
-            };
-
-            let usable_jokers = match card {
-                Card::Joker => 0,
-                _ => jokers,
-            };
-
-            if count + usable_jokers >= 5 {
-                return HandType::FiveOfAKind;
-            }
-
-            if count + usable_jokers >= 4 {
-                return HandType::FourOfAKind;
-            }
-
-            if count + usable_jokers >= 3 {
-                let jokers_needed = 3 - count;
-                jokers -= jokers_needed;
-
-                three_of_a_kind = true;
-
-                continue;
-            }
-
-            if count + usable_jokers >= 2 {
-                let jokers_needed = 2 - count;
-                jokers -= jokers_needed;
-
-                pairs += 1;
-
-                continue;
-            }
+        if counts.four_of_a_kind().is_some() {
+            return HandType::FourOfAKind;
         }
 
-        match (three_of_a_kind, pairs) {
-            (true, 1) => HandType::FullHouse,
-            (true, _) => HandType::ThreeOfAKind,
-            (false, 2) => HandType::TwoPair,
-            (false, 1) => HandType::OnePair,
-            _ => HandType::HighCard,
+        if counts.full_house().is_some() {
+            return HandType::FullHouse;
         }
+
+        if counts.three_of_a_kind().is_some() {
+            return HandType::ThreeOfAKind;
+        }
+
+        if counts.two_pair().is_some() {
+            return HandType::TwoPair;
+        }
+
+        if counts.one_pair().is_some() {
+            return HandType::OnePair;
+        }
+
+        HandType::HighCard
     }
 }
 
@@ -196,7 +232,9 @@ pub fn part_one(input: &Input) -> Result<usize> {
         .sum())
 }
 
-// Not: 248834240
+// Not: 249299342 (too high)
+// Not: 249050660
+// Not: 248834240 (too high)
 #[adventurous::part_two]
 pub fn part_two(input: &Input) -> Result<usize> {
     let hands = input
@@ -222,18 +260,6 @@ mod tests {
     use super::*;
 
     adventurous::test_solutions!();
-
-    #[test]
-    fn test_hand_comparison() {
-        let hand_one = Hand {
-            cards: [Card::King, Card::King, Card::Six, Card::Seven, Card::Seven],
-        };
-        let hand_two = Hand {
-            cards: [Card::King, Card::Ten, Card::Jack, Card::Jack, Card::Ten],
-        };
-
-        assert!(hand_one > hand_two);
-    }
 
     #[test]
     fn test_part_one_sample_input() -> Result<()> {
@@ -263,5 +289,74 @@ mod tests {
         assert_eq!(part_two(&Input::new(input.to_string()))?, 5905);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_hand_comparison() {
+        let hand_one = Hand {
+            cards: [Card::King, Card::King, Card::Six, Card::Seven, Card::Seven],
+        };
+        let hand_two = Hand {
+            cards: [Card::King, Card::Ten, Card::Jack, Card::Jack, Card::Ten],
+        };
+
+        assert!(hand_one > hand_two);
+    }
+
+    #[test]
+    fn test_hand_type_with_all_jokers() {
+        let hand = Hand {
+            cards: [
+                Card::Joker,
+                Card::Joker,
+                Card::Joker,
+                Card::Joker,
+                Card::Joker,
+            ],
+        };
+
+        assert_eq!(hand.ty(), HandType::FiveOfAKind);
+    }
+
+    #[test]
+    fn test_hand_type_with_four_of_a_kind_and_one_joker() {
+        let hand = Hand {
+            cards: [
+                Card::Queen,
+                Card::Queen,
+                Card::Joker,
+                Card::Queen,
+                Card::Queen,
+            ],
+        };
+
+        assert_eq!(hand.ty(), HandType::FiveOfAKind);
+    }
+
+    #[test]
+    fn test_hand_type_with_two_pair_and_three_jokers() {
+        let hand = Hand {
+            cards: [Card::Two, Card::Joker, Card::Joker, Card::Two, Card::Joker],
+        };
+
+        assert_eq!(hand.ty(), HandType::FiveOfAKind);
+    }
+
+    #[test]
+    fn test_hand_type_with_two_pair_one_card_and_two_jokers() {
+        let hand = Hand {
+            cards: [Card::Two, Card::Joker, Card::Joker, Card::Two, Card::Queen],
+        };
+
+        assert_eq!(hand.ty(), HandType::FourOfAKind);
+    }
+
+    #[test]
+    fn test_hand_type_with_two_pair_two_pair_and_one_joker() {
+        let hand = Hand {
+            cards: [Card::Two, Card::Joker, Card::Seven, Card::Two, Card::Seven],
+        };
+
+        assert_eq!(hand.ty(), HandType::FullHouse);
     }
 }
