@@ -80,10 +80,7 @@ impl Tile {
     pub fn neighbors<'map>(&self, map: &'map Map) -> Vec<&'map Tile> {
         [North, South, East, West]
             .into_iter()
-            .flat_map(|direction| {
-                self.neighbor(map, direction)
-                    .filter(|tile| tile.pipe.is_some())
-            })
+            .flat_map(|direction| self.neighbor(map, direction))
             .collect()
     }
 
@@ -114,6 +111,14 @@ impl Tile {
         (tile_one, tile_two)
     }
 }
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+enum Enclosure {
+    Inside,
+    Outside,
+}
+
+use Enclosure::*;
 
 struct Map {
     pub tiles: HashMap<(i32, i32), Tile>,
@@ -191,19 +196,36 @@ impl Map {
     }
 
     #[cfg(test)]
-    pub fn print(&self, distances_by_tile: &HashMap<(i32, i32), usize>) {
+    pub fn print(
+        &self,
+        distances_by_tile: &HashMap<(i32, i32), usize>,
+        enclosure_by_tile: &HashMap<(i32, i32), Enclosure>,
+    ) {
+        use std::io::Write;
+
+        let mut buffer = Vec::new();
+
         let (width, height) = self.tiles.keys().max().copied().unwrap();
 
         for y in 0..=height {
             for x in 0..=width {
                 if let Some(distance) = distances_by_tile.get(&(x, y)) {
-                    print!("[{distance: >2}]");
+                    write!(buffer, "[{distance: >2}]").unwrap();
                 } else {
-                    print!("[..]");
+                    let glyph = match enclosure_by_tile.get(&(x, y)) {
+                        Some(Inside) => " I",
+                        Some(Outside) => " O",
+                        None => "..",
+                    };
+
+                    write!(buffer, "[{glyph}]").unwrap();
                 }
             }
-            println!("");
+
+            writeln!(buffer, "").unwrap();
         }
+
+        println!("{}", String::from_utf8(buffer).unwrap());
     }
 }
 
@@ -213,7 +235,7 @@ pub fn part_one(input: &Input) -> Result<usize> {
     let distances_by_tile = map.compute_distances();
 
     #[cfg(test)]
-    map.print(&distances_by_tile);
+    map.print(&distances_by_tile, &HashMap::new());
 
     distances_by_tile
         .values()
@@ -224,6 +246,47 @@ pub fn part_one(input: &Input) -> Result<usize> {
 
 #[adventurous::part_two]
 pub fn part_two(input: &Input) -> Result<usize> {
+    let map = Map::parse(input);
+    let distances_by_tile = map.compute_distances();
+    let mut inclusion_by_tile: HashMap<(i32, i32), Enclosure> = HashMap::new();
+
+    let (width, height) = map.tiles.keys().max().copied().unwrap();
+
+    let min = distances_by_tile.keys().min().copied().unwrap();
+    let max = distances_by_tile.keys().max().copied().unwrap();
+
+    let (min_x, min_y) = min;
+    let (max_x, max_y) = max;
+
+    {
+        for x in 0..min_x {
+            for y in 0..=height {
+                inclusion_by_tile.insert((x, y), Outside);
+            }
+        }
+
+        for x in max_x + 1..=width {
+            for y in 0..=height {
+                inclusion_by_tile.insert((x, y), Outside);
+            }
+        }
+
+        for y in 0..min_y {
+            for x in 0..=width {
+                inclusion_by_tile.insert((x, y), Outside);
+            }
+        }
+
+        for y in max_y + 1..=height {
+            for x in 0..=width {
+                inclusion_by_tile.insert((x, y), Outside);
+            }
+        }
+    }
+
+    #[cfg(test)]
+    map.print(&distances_by_tile, &inclusion_by_tile);
+
     todo!()
 }
 
@@ -255,10 +318,80 @@ mod tests {
     #[ignore = "not yet solved"]
     fn test_part_two_sample_input() -> Result<()> {
         let input = indoc! {"
-
+            ...........
+            .S-------7.
+            .|F-----7|.
+            .||.....||.
+            .||.....||.
+            .|L-7.F-J|.
+            .|..|.|..|.
+            .L--J.L--J.
+            ...........
         "};
 
-        assert_eq!(part_two(&Input::new(input.to_string()))?, 0);
+        assert_eq!(part_two(&Input::new(input.to_string()))?, 4);
+
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "not yet solved"]
+    fn test_part_two_sample_input_two() -> Result<()> {
+        let input = indoc! {"
+            ..........
+            .S------7.
+            .|F----7|.
+            .||....||.
+            .||....||.
+            .|L-7F-J|.
+            .|..||..|.
+            .L--JL--J.
+            ..........
+        "};
+
+        assert_eq!(part_two(&Input::new(input.to_string()))?, 4);
+
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "not yet solved"]
+    fn test_part_two_sample_input_three() -> Result<()> {
+        let input = indoc! {"
+            .F----7F7F7F7F-7....
+            .|F--7||||||||FJ....
+            .||.FJ||||||||L7....
+            FJL7L7LJLJ||LJ.L-7..
+            L--J.L7...LJS7F-7L7.
+            ....F-J..F7FJ|L7L7L7
+            ....L7.F7||L7|.L7L7|
+            .....|FJLJ|FJ|F7|.LJ
+            ....FJL-7.||.||||...
+            ....L---J.LJ.LJLJ...
+        "};
+
+        assert_eq!(part_two(&Input::new(input.to_string()))?, 8);
+
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "not yet solved"]
+    fn test_part_two_sample_input_four() -> Result<()> {
+        let input = indoc! {"
+            FF7FSF7F7F7F7F7F---7
+            L|LJ||||||||||||F--J
+            FL-7LJLJ||||||LJL-77
+            F--JF--7||LJLJ7F7FJ-
+            L---JF-JLJ.||-FJLJJ7
+            |F|F-JF---7F7-L7L|7|
+            |FFJF7L7F-JF7|JL---7
+            7-L-JL7||F7|L7F-7F7|
+            L.L7LFJ|||||FJL7||LJ
+            L7JLJL-JLJLJL--JLJ.L
+        "};
+
+        assert_eq!(part_two(&Input::new(input.to_string()))?, 10);
 
         Ok(())
     }
