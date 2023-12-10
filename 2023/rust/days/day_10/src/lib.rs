@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 use adventurous::Input;
 use anyhow::{anyhow, Result};
@@ -64,6 +64,18 @@ impl Tile {
         map.tiles.get(&(new_x, new_y))
     }
 
+    pub fn neighbors<'map>(&self, map: &'map Map) -> Vec<&'map Tile> {
+        use Direction::*;
+
+        [North, South, East, West]
+            .into_iter()
+            .flat_map(|direction| {
+                self.neighbor(map, direction)
+                    .filter(|tile| tile.pipe.is_some())
+            })
+            .collect()
+    }
+
     pub fn connected_tiles<'map>(
         &self,
         map: &'map Map,
@@ -105,7 +117,25 @@ struct Map {
     pub tiles: HashMap<(i32, i32), Tile>,
 }
 
-#[adventurous::part_one]
+impl Map {
+    #[cfg(test)]
+    pub fn print(&self, distances_by_tile: &HashMap<(i32, i32), usize>) {
+        let (width, height) = self.tiles.keys().max().copied().unwrap();
+
+        for y in 0..=height {
+            for x in 0..=width {
+                if let Some(distance) = distances_by_tile.get(&(x, y)) {
+                    print!("{distance}");
+                } else {
+                    print!(".");
+                }
+            }
+            println!("");
+        }
+    }
+}
+
+#[adventurous::part_one(answer = "6951")]
 pub fn part_one(input: &Input) -> Result<usize> {
     let tiles = input
         .lines()
@@ -131,39 +161,54 @@ pub fn part_one(input: &Input) -> Result<usize> {
         .unwrap();
 
     let mut distances_by_tile = HashMap::new();
-    let mut current_location = start_tile.location;
-    let mut steps = 0;
+    let mut candidates = VecDeque::new();
 
-    loop {
-        let current_tile = map.tiles.get(&current_location).unwrap();
+    candidates.push_back(start_tile);
 
-        steps += 1;
+    while let Some(tile) = candidates.pop_front() {
+        if tile.is_starting_position {
+            let neighbors = tile.neighbors(&map);
+            for neighbor in neighbors {
+                if neighbor.pipe.is_some() {
+                    candidates.push_back(neighbor);
+                }
+            }
 
-        let (tile_a, tile_b) = current_tile.connected_tiles(&map);
+            distances_by_tile.insert(tile.location, 0);
 
-        if let Some(tile_a) = tile_a {
-            distances_by_tile.insert(tile_a.location, steps);
+            continue;
         }
 
-        if let Some(tile_b) = tile_b {
-            distances_by_tile.insert(tile_b.location, steps);
-        }
+        let (tile_a, tile_b) = tile.connected_tiles(&map);
 
-        let next_location = tile_a
-            .map(|tile_a| tile_a.location)
-            .or(tile_b.map(|tile_b| tile_b.location))
-            .expect("no next location");
+        let tile_a_distance = tile_a.and_then(|tile| distances_by_tile.get(&tile.location));
+        let tile_b_distance = tile_b.and_then(|tile| distances_by_tile.get(&tile.location));
 
-        current_location = next_location;
+        if let Some(distance) = tile_a_distance.or(tile_b_distance) {
+            if let Some(tile_a) = tile_a {
+                if !distances_by_tile.contains_key(&tile_a.location) {
+                    candidates.push_back(tile_a);
+                }
+            }
 
-        if current_location == start_tile.location {
-            break;
+            if let Some(tile_b) = tile_b {
+                if !distances_by_tile.contains_key(&tile_b.location) {
+                    candidates.push_back(tile_b);
+                }
+            }
+
+            distances_by_tile.insert(tile.location, distance + 1);
         }
     }
 
-    dbg!(distances_by_tile);
+    #[cfg(test)]
+    map.print(&distances_by_tile);
 
-    todo!()
+    distances_by_tile
+        .values()
+        .max()
+        .copied()
+        .ok_or_else(|| anyhow!("no max distance"))
 }
 
 #[adventurous::part_two]
@@ -181,7 +226,6 @@ mod tests {
     adventurous::test_solutions!();
 
     #[test]
-    #[ignore = "not yet solved"]
     fn test_part_one_sample_input() -> Result<()> {
         let input = indoc! {"
             .....
