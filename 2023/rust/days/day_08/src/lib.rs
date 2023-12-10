@@ -1,11 +1,14 @@
 mod parser;
 
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
+use std::sync::{Arc, Mutex, RwLock};
+use std::thread::{self, Thread};
 
 use adventurous::Input;
 use anyhow::{anyhow, Result};
+use crossbeam_channel::{unbounded, Receiver, SendError, Sender};
 use nom::Finish;
 
 use crate::parser::parse_map;
@@ -109,6 +112,16 @@ impl Map {
     }
 }
 
+#[derive(Clone)]
+struct Ghost {
+    pub id: usize,
+    pub map: Arc<Map>,
+    pub location: Arc<RwLock<Node>>,
+    pub instruction_receiver: Receiver<Instruction>,
+    pub completion_sender: Sender<(usize, usize)>,
+    // pub thread: Thread,
+}
+
 #[adventurous::part_one(answer = "15871")]
 pub fn part_one(input: &Input) -> Result<usize> {
     let map = Map::parse(input)?;
@@ -128,30 +141,152 @@ pub fn part_one(input: &Input) -> Result<usize> {
     Ok(steps)
 }
 
+// Not: 11567 (too low)
 #[adventurous::part_two]
 pub fn part_two(input: &Input) -> Result<usize> {
-    let map = Map::parse(input)?;
+    let map = Arc::new(Map::parse(input)?);
 
     let start_nodes = map.network.nodes.keys().filter(|node| node.ends_with('A'));
 
-    let mut instructions = InstructionList::from_iter(map.instructions);
-    let mut locations = start_nodes.clone().collect::<Vec<_>>();
+    let (instruction_sender, instruction_receiver) = unbounded();
+    let (completion_sender, completion_receiver) = unbounded();
+
+    let mut ghosts = Vec::new();
+
+    for (index, node) in start_nodes.clone().enumerate() {
+        let id = index + 1;
+
+        let instruction_receiver = instruction_receiver.clone();
+        let completion_sender = completion_sender.clone();
+
+        let ghost = Ghost {
+            id,
+            map: map.clone(),
+            location: Arc::new(RwLock::new(node.clone())),
+            instruction_receiver,
+            completion_sender,
+            // thread: thread.thread().clone(),
+        };
+
+        let thread = thread::spawn({
+            let ghost = ghost.clone();
+            let start_node = node.clone();
+            move || {
+                let mut instructions = InstructionList::from_iter(ghost.map.instructions.clone());
+                let mut location = &start_node;
+                // let mut locations = start_nodes.clone().collect::<Vec<_>>();
+                let mut steps = 0;
+
+                loop {
+                    let instruction = instructions.next().unwrap();
+
+                    location = ghost.map.network.navigate(location, instruction).unwrap();
+
+                    steps += 1;
+
+                    if location.ends_with('Z') {
+                        ghost.completion_sender.send((ghost.id, steps)).unwrap();
+                    }
+                }
+
+                // while let Ok(instruction) = ghost.instruction_receiver.recv() {
+                //     // println!("Ghost {} received instruction: {instruction:?}", ghost.id);
+
+                //     let new_location = ghost
+                //         .map
+                //         .network
+                //         .navigate(&ghost.location.read().unwrap(), instruction)
+                //         .unwrap();
+
+                //     // println!("Ghost {} moved to {}", ghost.id, new_location);
+
+                //     *ghost.location.write().unwrap() = new_location.clone();
+                // }
+            }
+        });
+
+        ghosts.push(ghost);
+    }
+
+    let mut instructions = InstructionList::from_iter(map.instructions.clone());
+    // let mut locations = start_nodes.clone().collect::<Vec<_>>();
     let mut steps = 0;
 
-    loop {
-        let instruction = instructions.next().unwrap();
+    // thread::spawn(|| {
 
-        for location in &mut locations {
-            *location = map.network.navigate(location, instruction)?;
-        }
+    // })
 
-        steps += 1;
+    let all_ghost_ids = start_nodes
+        .enumerate()
+        .map(|(index, _)| index + 1)
+        .collect::<Vec<_>>();
 
-        let all_ghosts_at_end = locations.iter().all(|node| node.ends_with('Z'));
-        if all_ghosts_at_end {
-            break;
-        }
+    let mut completions: HashMap<usize, HashSet<usize>> = HashMap::new();
+
+    for ghost_id in &all_ghost_ids {
+        completions.entry(*ghost_id).or_default();
     }
+
+    while let Ok((ghost_id, steps)) = completion_receiver.recv() {
+        let entry = completions.entry(ghost_id).or_default();
+
+        entry.insert(steps);
+
+        let mut sets = completions.values().cloned().collect::<Vec<_>>();
+
+        let (intersection, others) = sets.split_at_mut(1);
+        let intersection = &mut intersection[0];
+        for other in others {
+            intersection.retain(|e| other.contains(e));
+        }
+
+        if intersection.len() > 1 {
+            dbg!(intersection);
+        }
+
+        // if completions.keys().len() == all_ghost_ids.len() {
+        //     let min_steps = completions
+        //         .values()
+        //         .map(|values| values.iter().min().unwrap())
+        //         .min()
+        //         .unwrap();
+
+        //     println!("Minimum steps = {}", min_steps);
+
+        //     break;
+        // }
+    }
+
+    // loop {
+    //     let instruction = instructions.next().unwrap();
+
+    //     instruction_sender.send(instruction)?;
+
+    //     steps += 1;
+
+    //     dbg!(steps);
+
+    //     // for ghost in ghosts {
+
+    //     // }
+    //     // break;
+
+    //     // for ghost in ghosts {
+    //     // }
+
+    //     // for location in &mut locations {
+    //     //     *location = map.network.navigate(location, instruction)?;
+    //     // }
+
+    //     // steps += 1;
+
+    //     let all_ghosts_at_end = ghosts
+    //         .iter()
+    //         .all(|ghost| ghost.location.read().unwrap().ends_with('Z'));
+    //     if all_ghosts_at_end {
+    //         break;
+    //     }
+    // }
 
     Ok(steps)
 }

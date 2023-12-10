@@ -10,6 +10,7 @@ dhat-heap = ["dep:dhat"]
 [dependencies]
 adventurous.workspace = true
 anyhow.workspace = true
+crossbeam-channel.workspace = true
 dhat = { workspace = true, optional = true }
 nom.workspace = true
 

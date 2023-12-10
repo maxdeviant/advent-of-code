@@ -6,6 +6,7 @@ members = ["days/*"]
 adventurous = "0.3.0"
 anyhow = "1.0"
 array-init = "2.1.0"
+crossbeam-channel = "0.5"
 dhat = "0.3.2"
 divan = "0.1.4"
 enum-map = "2.7.3"
