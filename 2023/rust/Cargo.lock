@@ -239,6 +239,7 @@ dependencies = [
  "dhat",
  "divan",
  "indoc",
+ "nom",
  "pretty_assertions",
 ]
 
