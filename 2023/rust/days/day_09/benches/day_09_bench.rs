@@ -13,6 +13,6 @@ fn part_one_bench() -> Result<i32> {
 }
 
 #[divan::bench(name = "part_two")]
-fn part_two_bench() -> Result<usize> {
+fn part_two_bench() -> Result<i32> {
     part_two(divan::black_box(&Input::from(include_str!("../input.txt"))))
 }
