@@ -118,6 +118,76 @@ struct Map {
 }
 
 impl Map {
+    pub fn parse(input: &Input) -> Self {
+        let tiles = input
+            .lines()
+            .enumerate()
+            .flat_map(|(y, line)| {
+                line.chars().enumerate().map(move |(x, char)| Tile {
+                    location: (x as i32, y as i32),
+                    pipe: Pipe::parse(char).ok(),
+                    is_starting_position: char == 'S',
+                })
+            })
+            .fold(HashMap::new(), |mut map, tile| {
+                map.insert(tile.location, tile);
+                map
+            });
+
+        Self { tiles }
+    }
+
+    pub fn compute_distances(&self) -> HashMap<(i32, i32), usize> {
+        let start_tile = self
+            .tiles
+            .values()
+            .find(|tile| tile.is_starting_position)
+            .unwrap();
+
+        let mut distances_by_tile = HashMap::new();
+        let mut candidates = VecDeque::new();
+
+        candidates.push_back(start_tile);
+
+        while let Some(tile) = candidates.pop_front() {
+            if tile.is_starting_position {
+                let neighbors = tile.neighbors(&self);
+                for neighbor in neighbors {
+                    if neighbor.pipe.is_some() {
+                        candidates.push_back(neighbor);
+                    }
+                }
+
+                distances_by_tile.insert(tile.location, 0);
+
+                continue;
+            }
+
+            let (tile_a, tile_b) = tile.connected_tiles(&self);
+
+            let tile_a_distance = tile_a.and_then(|tile| distances_by_tile.get(&tile.location));
+            let tile_b_distance = tile_b.and_then(|tile| distances_by_tile.get(&tile.location));
+
+            if let Some(distance) = tile_a_distance.or(tile_b_distance) {
+                if let Some(tile_a) = tile_a {
+                    if !distances_by_tile.contains_key(&tile_a.location) {
+                        candidates.push_back(tile_a);
+                    }
+                }
+
+                if let Some(tile_b) = tile_b {
+                    if !distances_by_tile.contains_key(&tile_b.location) {
+                        candidates.push_back(tile_b);
+                    }
+                }
+
+                distances_by_tile.insert(tile.location, distance + 1);
+            }
+        }
+
+        distances_by_tile
+    }
+
     #[cfg(test)]
     pub fn print(&self, distances_by_tile: &HashMap<(i32, i32), usize>) {
         let (width, height) = self.tiles.keys().max().copied().unwrap();
@@ -137,69 +207,8 @@ impl Map {
 
 #[adventurous::part_one(answer = "6951")]
 pub fn part_one(input: &Input) -> Result<usize> {
-    let tiles = input
-        .lines()
-        .enumerate()
-        .flat_map(|(y, line)| {
-            line.chars().enumerate().map(move |(x, char)| Tile {
-                location: (x as i32, y as i32),
-                pipe: Pipe::parse(char).ok(),
-                is_starting_position: char == 'S',
-            })
-        })
-        .fold(HashMap::new(), |mut map, tile| {
-            map.insert(tile.location, tile);
-            map
-        });
-
-    let map = Map { tiles };
-
-    let start_tile = map
-        .tiles
-        .values()
-        .find(|tile| tile.is_starting_position)
-        .unwrap();
-
-    let mut distances_by_tile = HashMap::new();
-    let mut candidates = VecDeque::new();
-
-    candidates.push_back(start_tile);
-
-    while let Some(tile) = candidates.pop_front() {
-        if tile.is_starting_position {
-            let neighbors = tile.neighbors(&map);
-            for neighbor in neighbors {
-                if neighbor.pipe.is_some() {
-                    candidates.push_back(neighbor);
-                }
-            }
-
-            distances_by_tile.insert(tile.location, 0);
-
-            continue;
-        }
-
-        let (tile_a, tile_b) = tile.connected_tiles(&map);
-
-        let tile_a_distance = tile_a.and_then(|tile| distances_by_tile.get(&tile.location));
-        let tile_b_distance = tile_b.and_then(|tile| distances_by_tile.get(&tile.location));
-
-        if let Some(distance) = tile_a_distance.or(tile_b_distance) {
-            if let Some(tile_a) = tile_a {
-                if !distances_by_tile.contains_key(&tile_a.location) {
-                    candidates.push_back(tile_a);
-                }
-            }
-
-            if let Some(tile_b) = tile_b {
-                if !distances_by_tile.contains_key(&tile_b.location) {
-                    candidates.push_back(tile_b);
-                }
-            }
-
-            distances_by_tile.insert(tile.location, distance + 1);
-        }
-    }
+    let map = Map::parse(input);
+    let distances_by_tile = map.compute_distances();
 
     #[cfg(test)]
     map.print(&distances_by_tile);
