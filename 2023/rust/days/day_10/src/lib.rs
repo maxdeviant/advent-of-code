@@ -11,13 +11,15 @@ pub enum Direction {
     West,
 }
 
+use Direction::*;
+
 impl Direction {
     pub fn delta(&self) -> (i32, i32) {
         match self {
-            Self::North => (0, -1),
-            Self::South => (0, 1),
-            Self::East => (1, 0),
-            Self::West => (-1, 0),
+            North => (0, -1),
+            South => (0, 1),
+            East => (1, 0),
+            West => (-1, 0),
         }
     }
 }
@@ -44,6 +46,17 @@ impl Pipe {
             _ => Err(anyhow!("Invalid pipe: '{char}'")),
         }
     }
+
+    pub fn ends(&self) -> (Direction, Direction) {
+        match self {
+            Self::Vertical => (North, South),
+            Self::Horizontal => (East, West),
+            Self::NorthToEast => (North, East),
+            Self::NorthToWest => (North, West),
+            Self::SouthToWest => (South, West),
+            Self::SouthToEast => (South, East),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -65,8 +78,6 @@ impl Tile {
     }
 
     pub fn neighbors<'map>(&self, map: &'map Map) -> Vec<&'map Tile> {
-        use Direction::*;
-
         [North, South, East, West]
             .into_iter()
             .flat_map(|direction| {
@@ -95,16 +106,7 @@ impl Tile {
             return (None, None);
         };
 
-        use Direction::*;
-
-        let (direction_one, direction_two) = match pipe {
-            Pipe::Vertical => (North, South),
-            Pipe::Horizontal => (East, West),
-            Pipe::NorthToEast => (North, East),
-            Pipe::NorthToWest => (North, West),
-            Pipe::SouthToWest => (South, West),
-            Pipe::SouthToEast => (South, East),
-        };
+        let (direction_one, direction_two) = pipe.ends();
 
         let tile_one = self.neighbor(map, direction_one);
         let tile_two = self.neighbor(map, direction_two);
@@ -195,9 +197,9 @@ impl Map {
         for y in 0..=height {
             for x in 0..=width {
                 if let Some(distance) = distances_by_tile.get(&(x, y)) {
-                    print!("{distance}");
+                    print!("[{distance: >2}]");
                 } else {
-                    print!(".");
+                    print!("[..]");
                 }
             }
             println!("");
